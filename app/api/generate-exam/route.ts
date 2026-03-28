@@ -27,11 +27,11 @@ export async function POST(req: NextRequest) {
     }
 
     await initDB()
-    const rows = await sql`
+    const rows = (await sql`
       INSERT INTO exams (topic, subject, grade, difficulty, content)
       VALUES (${topic}, ${subject}, ${grade}, ${difficulty}, ${JSON.stringify(questions)})
       RETURNING id
-    `
+    `) as { id: number }[]
     return NextResponse.json({ success: true, examId: rows[0].id, questionCount: questions.length })
   } catch (err: any) {
     console.error(err)

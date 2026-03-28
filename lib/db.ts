@@ -1,6 +1,32 @@
 import { neon } from '@neondatabase/serverless'
 
-const sql = neon(process.env.DATABASE_URL!)
+type Sql = ReturnType<typeof neon>
+
+/** Hàng từ bảng exams — ép kiểu kết quả sql`...` (Neon union quá rộng). */
+export type ExamRow = {
+  id: number
+  topic: string
+  subject: string
+  grade: string
+  difficulty: string
+  content: unknown
+  created_at: Date | string
+}
+
+let sqlInstance: Sql | null = null
+
+function getSql(): Sql {
+  if (!sqlInstance) {
+    const url = process.env.DATABASE_URL
+    if (!url) throw new Error('DATABASE_URL is not set')
+    sqlInstance = neon(url)
+  }
+  return sqlInstance
+}
+
+/** Lazy: tránh gọi neon() lúc import (build không có DATABASE_URL). */
+const sql = ((strings: TemplateStringsArray, ...values: unknown[]) =>
+  getSql()(strings, ...values)) as Sql
 
 export async function initDB() {
   await sql`

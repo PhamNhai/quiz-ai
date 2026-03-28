@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callGemini, buildCommentPrompt } from '@/lib/gemini'
-import sql from '@/lib/db'
+import sql, { type ExamRow } from '@/lib/db'
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,11 +8,11 @@ export async function POST(req: NextRequest) {
     if (!examId || !studentName || !answers)
       return NextResponse.json({ error: 'Thiếu thông tin' }, { status: 400 })
 
-    const rows = await sql`SELECT * FROM exams WHERE id = ${examId}`
+    const rows = (await sql`SELECT * FROM exams WHERE id = ${examId}`) as ExamRow[]
     if (!rows.length) return NextResponse.json({ error: 'Đề thi không tồn tại' }, { status: 404 })
 
     const exam = rows[0]
-    const questions: any[] = exam.content
+    const questions = exam.content as any[]
 
     let score = 0
     const wrongQuestions: string[] = []
@@ -33,11 +33,11 @@ export async function POST(req: NextRequest) {
       studentName, wrongQuestions
     }))
 
-    const saved = await sql`
+    const saved = (await sql`
       INSERT INTO results (exam_id, student_name, score, total_questions, answers, ai_comment)
       VALUES (${examId}, ${studentName}, ${score}, ${questions.length}, ${JSON.stringify(answers)}, ${aiComment})
       RETURNING id
-    `
+    `) as { id: number }[]
     return NextResponse.json({
       success: true, resultId: saved[0].id,
       score, total: questions.length,
