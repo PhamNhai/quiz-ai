@@ -27,7 +27,7 @@ export default function ExamEntry() {
       <nav className={s.nav}><Link href="/" className={s.logo}>QuizAI</Link></nav>
       <div className={s.center}>
         <div className={s.card}>
-          <h1>Làm bài thi</h1>
+          <h1 className={s.title}>Làm bài thi</h1>
           <p className={s.sub}>Nhập thông tin của bạn để bắt đầu.</p>
           <div className={s.field}>
             <label>Họ và tên</label>

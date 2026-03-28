@@ -20,7 +20,7 @@ function Content() {
     <div className={s.page}>
       <div className={s.card}>
         <div className={s.iconWrap}><span className={s.icon}>✦</span></div>
-        <h1>Đề thi đã sẵn sàng!</h1>
+        <h1 className={s.title}>Đề thi đã sẵn sàng!</h1>
         <p className={s.sub}>Tạo thành công <strong>{count} câu hỏi</strong>. Chia sẻ link bên dưới cho học sinh.</p>
         <div className={s.idBadge}>Mã đề: <strong>#{examId}</strong></div>
         <div className={s.linkBox}>
