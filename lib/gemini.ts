@@ -1,5 +1,7 @@
+/** Mặc định: gemini-2.5-flash. Có thể ghi đè bằng GEMINI_MODEL trong .env */
+const model = () => process.env.GEMINI_MODEL ?? 'gemini-2.5-flash'
 const GEMINI_URL = (key: string) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`
+  `https://generativelanguage.googleapis.com/v1beta/models/${model()}:generateContent?key=${key}`
 
 export async function callGemini(prompt: string, system?: string): Promise<string> {
   const key = process.env.GEMINI_API_KEY
