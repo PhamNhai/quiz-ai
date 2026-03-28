@@ -1,0 +1,49 @@
+.page { min-height: 100vh; background: var(--bg); }
+.nav { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.5rem; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.back { font-size: 14px; color: var(--text-2); transition: color 0.15s; }
+.back:hover { color: var(--text); }
+.navTitle { font-size: 14px; font-weight: 500; }
+.container { max-width: 680px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+.pageHeader { margin-bottom: 2rem; }
+.pageHeader h1 { font-family: var(--font-display); font-size: 28px; font-weight: 400; letter-spacing: -0.4px; }
+.pageHeader p { font-size: 14px; color: var(--text-2); margin-top: 4px; }
+.section { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+.label { display: block; font-size: 13px; font-weight: 500; color: var(--text-2); margin-bottom: 10px; letter-spacing: 0.1px; }
+.req { color: var(--accent); }
+.opt { font-weight: 400; color: var(--text-3); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 7px 15px; border-radius: 20px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 14px; color: var(--text); transition: all 0.12s; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chipOn { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
+.chipSm { padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface2); font-size: 13px; color: var(--text-2); transition: all 0.12s; }
+.chipSm:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.chipSmOn { background: var(--accent-light) !important; border-color: var(--accent) !important; color: var(--accent-text) !important; }
+.subtopicBlock { margin-top: 12px; }
+.subtopicHint { font-size: 12px; color: var(--text-3); margin-bottom: 8px; display: block; }
+.input { width: 100%; padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 15px; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.12s; }
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--text-3); }
+.inputSm { padding: 7px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 14px; background: var(--surface); color: var(--text); outline: none; width: 130px; transition: border-color 0.12s; }
+.inputSm:focus { border-color: var(--accent); }
+.inputSm::placeholder { color: var(--text-3); }
+.countRow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.countChip { padding: 7px 18px; border-radius: 20px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 14px; font-weight: 500; color: var(--text); transition: all 0.12s; }
+.countChip:hover { border-color: var(--accent); }
+.diffGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.diffCard { padding: 14px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--surface); text-align: left; display: flex; flex-direction: column; gap: 3px; transition: all 0.12s; }
+.diffCard:hover { border-color: var(--accent); }
+.diffOn { border-color: var(--accent) !important; background: var(--accent-light) !important; }
+.diffLabel { font-size: 14px; font-weight: 500; color: var(--text); }
+.diffDesc { font-size: 12px; color: var(--text-3); }
+.diffOn .diffLabel { color: var(--accent-text); }
+.diffOn .diffDesc { color: var(--accent); }
+.textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 14px; background: var(--surface); color: var(--text); outline: none; resize: vertical; line-height: 1.6; transition: border-color 0.12s; }
+.textarea:focus { border-color: var(--accent); }
+.textarea::placeholder { color: var(--text-3); }
+.error { padding: 12px 16px; background: var(--danger-light); border: 1px solid #f5b7b1; border-radius: var(--radius); font-size: 14px; color: var(--danger); margin-bottom: 1rem; }
+.btnCreate { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.15s, transform 0.1s, opacity 0.15s; }
+.btnCreate:hover:not(:disabled) { background: var(--accent-text); transform: translateY(-1px); }
+.btnCreate:disabled { opacity: 0.5; cursor: not-allowed; }
+.hint { font-size: 13px; color: var(--text-3); text-align: center; margin-top: 10px; }
+.spin { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

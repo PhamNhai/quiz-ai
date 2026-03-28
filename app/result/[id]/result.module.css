@@ -1,0 +1,55 @@
+.page { min-height: 100vh; background: var(--bg); }
+.nav { padding: 1.25rem 2rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+.logo { font-family: var(--font-display); font-size: 20px; }
+.center { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; }
+.msg { font-size: 15px; color: var(--text-2); }
+.link { font-size: 14px; color: var(--accent); }
+.container { max-width: 680px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+.scoreCard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.5rem 2rem; text-align: center; margin-bottom: 1rem; box-shadow: var(--shadow); }
+.scoreBig { font-family: var(--font-display); font-size: 4rem; font-weight: 400; line-height: 1; margin-bottom: 8px; }
+.excellent { color: #1a6b4a; }
+.good      { color: #1a5276; }
+.average   { color: #7d6608; }
+.poor      { color: var(--danger); }
+.scoreDetail { font-size: 15px; color: var(--text-2); margin-bottom: 12px; }
+.gradeBadge { display: inline-block; font-size: 13px; font-weight: 500; padding: 4px 16px; border-radius: 20px; }
+.badge_excellent { background: var(--success-light); color: #0f4d35; }
+.badge_good      { background: var(--accent-light);  color: var(--accent-text); }
+.badge_average   { background: #fef7e6; color: #7d4e0f; }
+.badge_poor      { background: var(--danger-light);  color: var(--danger); }
+
+.aiCard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; }
+.aiHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.aiIcon { font-size: 16px; color: var(--accent); }
+.aiLabel { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.aiText { font-size: 15px; line-height: 1.7; color: var(--text); }
+
+.btnToggle { width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 14px; font-weight: 500; color: var(--text-2); margin-bottom: 1rem; transition: background 0.12s; }
+.btnToggle:hover { background: var(--surface2); }
+
+.detailList { display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem; }
+.detailCard { background: var(--surface); border-radius: var(--radius-lg); padding: 1.25rem; border: 1px solid var(--border); }
+.correct { border-left: 3px solid var(--success); }
+.wrong   { border-left: 3px solid var(--danger); }
+.detailHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.detailNum { font-size: 12px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+.detailBadge { font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 10px; }
+.badgeCorrect { background: var(--success-light); color: #0f4d35; }
+.badgeWrong   { background: var(--danger-light);  color: var(--danger); }
+.detailQ { font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 12px; }
+.detailOptions { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.detailOpt { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); padding: 6px 10px; border-radius: 6px; background: var(--surface2); flex-wrap: wrap; }
+.optCorrect { background: var(--success-light); color: #0f4d35; font-weight: 500; }
+.optWrong   { background: var(--danger-light);  color: var(--danger); text-decoration: line-through; }
+.optK { font-weight: 500; min-width: 16px; }
+.optTag     { margin-left: auto; font-size: 11px; background: var(--success); color: #fff; padding: 2px 8px; border-radius: 10px; }
+.optTagWrong{ margin-left: auto; font-size: 11px; background: var(--danger); color: #fff; padding: 2px 8px; border-radius: 10px; }
+.explanation { background: var(--warn-light, #fef7e6); border-radius: 6px; padding: 10px 12px; font-size: 13px; color: var(--text-2); line-height: 1.6; display: flex; gap: 8px; }
+.expIcon { flex-shrink: 0; }
+
+.footerActions { display: flex; gap: 10px; }
+.btnAgain   { flex: 1; padding: 13px; background: var(--accent); color: #fff; border-radius: var(--radius); font-size: 15px; font-weight: 500; text-align: center; transition: background 0.15s; }
+.btnAgain:hover { background: var(--accent-text); }
+.btnTeacher { flex: 1; padding: 13px; background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 15px; font-weight: 500; text-align: center; transition: background 0.15s; }
+.btnTeacher:hover { background: var(--surface2); }
