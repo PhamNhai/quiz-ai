@@ -6,6 +6,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   if (pathname === '/teacher/login') return NextResponse.next()
 
+  if (pathname === '/teacher/manage') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/teacher'
+    return NextResponse.redirect(url)
+  }
+
   if (pathname.startsWith('/teacher')) {
     const ok = await verifySessionToken(request.cookies.get(TEACHER_SESSION_COOKIE)?.value)
     if (!ok) {

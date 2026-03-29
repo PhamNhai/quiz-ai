@@ -3,6 +3,7 @@
 .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .err { color: var(--danger); font-size: 15px; }
+.errLink { display: inline-block; margin-top: 12px; font-size: 14px; color: var(--accent); }
 
 .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1.25rem 1.5rem; position: sticky; top: 0; z-index: 10; }
 .headerInner { max-width: 680px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }

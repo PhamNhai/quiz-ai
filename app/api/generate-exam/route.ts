@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     if (!(await isTeacherRequest(req)))
       return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
-    const { subject, grade, topic, subtopic, count, difficulty, extra, examCode, allowRetake } = await req.json()
+    const { subject, grade, topic, subtopic, count, difficulty, extra, examCode, allowRetake, classIds } = await req.json()
     if (!subject || !grade || !topic || !count)
       return NextResponse.json({ error: 'Thiếu thông tin bắt buộc' }, { status: 400 })
 
@@ -46,9 +46,17 @@ export async function POST(req: NextRequest) {
       VALUES (${finalCode}, ${topic}, ${subject}, ${grade}, ${difficulty}, ${allowRetake ?? true}, ${JSON.stringify(questions)})
       RETURNING id
     `) as { id: number }[]
+    const newId = rows[0].id
+    const ids = Array.isArray(classIds) ? classIds.map((x: unknown) => Number(x)).filter(n => !isNaN(n)) : []
+    for (const cid of ids) {
+      await sql`
+        INSERT INTO exam_classes (exam_id, class_id) VALUES (${newId}, ${cid})
+        ON CONFLICT (exam_id, class_id) DO NOTHING
+      `
+    }
     return NextResponse.json({
       success: true,
-      examId: rows[0].id,
+      examId: newId,
       examCode: finalCode,
       questionCount: questions.length,
       // Trả về questions để giáo viên review

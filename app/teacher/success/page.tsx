@@ -51,7 +51,7 @@ function Content() {
         <div className={s.actions}>
           <Link href={`/exam/${examId}`} className={s.btnPreview} target="_blank">Xem trước bài thi →</Link>
           <Link href={`/teacher/stats/${examId}`} className={s.btnStats}>Xem kết quả</Link>
-          <Link href="/teacher/manage" className={s.btnNew}>Danh sách đề</Link>
+          <Link href="/teacher" className={s.btnNew}>Danh sách đề</Link>
         </div>
       </div>
     </div>

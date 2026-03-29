@@ -7,7 +7,7 @@ import s from './login.module.css'
 function Form() {
   const router = useRouter()
   const sp = useSearchParams()
-  const next = sp.get('next') || '/teacher/manage'
+  const next = sp.get('next') || '/teacher'
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -26,7 +26,7 @@ function Form() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Đăng nhập thất bại')
-      router.replace(next.startsWith('/teacher') ? next : '/teacher/manage')
+      router.replace(next.startsWith('/teacher') ? next : '/teacher')
       router.refresh()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Lỗi')

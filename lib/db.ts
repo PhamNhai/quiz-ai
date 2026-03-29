@@ -59,6 +59,48 @@ export async function initDB() {
       submitted_at    TIMESTAMPTZ DEFAULT NOW()
     )
   `
+  await sql`ALTER TABLE results ADD COLUMN IF NOT EXISTS student_id INTEGER`
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS classes (
+      id         SERIAL PRIMARY KEY,
+      name       TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
+  await sql`
+    CREATE TABLE IF NOT EXISTS class_students (
+      id           SERIAL PRIMARY KEY,
+      class_id     INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+      display_name TEXT NOT NULL,
+      password_salt TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      note         TEXT DEFAULT '',
+      created_at   TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (class_id, display_name)
+    )
+  `
+  await sql`
+    CREATE TABLE IF NOT EXISTS exam_classes (
+      exam_id  INTEGER NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+      class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+      PRIMARY KEY (exam_id, class_id)
+    )
+  `
+
+  await sql`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'results_student_id_fkey'
+      ) THEN
+        ALTER TABLE results
+          ADD CONSTRAINT results_student_id_fkey
+          FOREIGN KEY (student_id) REFERENCES class_students(id) ON DELETE SET NULL;
+      END IF;
+    END
+    $$;
+  `
 }
 
 /** Mã đề duy nhất: nếu trùng thì thêm hậu tố -2, -3, ... */

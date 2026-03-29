@@ -56,7 +56,7 @@ export default function ReviewPage() {
   return (
     <div className={s.page}>
       <nav className={s.nav}>
-        <Link href="/teacher" className={s.back}>← Tạo lại</Link>
+        <Link href="/teacher/create" className={s.back}>← Tạo lại</Link>
         <span className={s.navTitle}>Kiểm tra đáp án</span>
         <span className={s.navBadge}>{questions.length} câu</span>
       </nav>

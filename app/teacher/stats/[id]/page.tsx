@@ -48,7 +48,7 @@ export default function StatsPage() {
   return (
     <div className={s.page}>
       <nav className={s.nav}>
-        <Link href="/teacher/manage" className={s.back}>← Quản lý đề</Link>
+        <Link href="/teacher" className={s.back}>← Tổng quan</Link>
         <span className={s.navTitle}>Kết quả thi — Đề #{id}</span>
       </nav>
       <div className={s.container}>
