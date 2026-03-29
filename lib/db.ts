@@ -120,6 +120,12 @@ export async function initDB() {
       PRIMARY KEY (exam_id, class_id)
     )
   `
+  await sql`ALTER TABLE classes ADD COLUMN IF NOT EXISTS code TEXT`
+  await sql`
+    UPDATE classes SET code = 'c' || id::text
+    WHERE code IS NULL OR TRIM(code) = ''
+  `
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS classes_code_key ON classes (code)`
 
   await sql`
     DO $$

@@ -85,7 +85,7 @@ export default function ClassExamBoardPage() {
           ← {className || 'Lớp'}
         </Link>
         <Link href={`/teacher/stats/${exam.id}`} className={s.statsLink}>
-          Bảng xếp hạng
+          Xem
         </Link>
         <Link href={`/teacher/exams/${exam.id}/edit`} className={s.editExamLink}>
           Sửa đề

@@ -50,8 +50,14 @@
 .dashTop{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;padding:1.25rem 1.5rem 0;max-width:1000px;margin:0 auto}
 .dashActions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 20px;border-radius:var(--radius);font-size:14px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,.15)}
-.classCol{max-width:160px;font-size:12px}
-.classPills{display:flex;flex-wrap:wrap;gap:4px}
+.classCol{max-width:200px;font-size:12px}
+.classColInner{display:flex;align-items:flex-start;gap:6px;min-width:0}
+.classPills{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0}
+.btnAssignClass{flex-shrink:0;padding:2px 6px;font-size:13px;line-height:1;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text-2);cursor:pointer}
+.btnAssignClass:hover{border-color:var(--accent);color:var(--accent)}
+.tdQr{text-align:center;vertical-align:middle}
+.btnQrCell{display:inline-flex;align-items:center;justify-content:center;padding:6px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-2);cursor:pointer;transition:border-color .12s,color .12s}
+.btnQrCell:hover{border-color:var(--accent);color:var(--accent)}
 .pill{font-size:11px;padding:2px 8px;border-radius:8px;background:var(--surface2);color:var(--text-2);border:1px solid var(--border)}
 .actionsWide{flex-wrap:wrap;max-width:280px;justify-content:flex-end}
 .btnMini{padding:4px 8px;font-size:11px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-2);cursor:pointer;white-space:nowrap}
@@ -61,7 +67,10 @@
 .modal h3{margin:0 0 12px;font-size:16px;font-weight:600;color:var(--text)}
 .modalQr{text-align:center}
 .modalQr img{display:block;margin:0 auto 12px;border-radius:8px}
-.modalHint{font-size:12px;color:var(--text-3);word-break:break-all;margin-bottom:12px}
+.modalUrlRow{display:flex;align-items:flex-start;gap:8px;justify-content:center;text-align:left;margin-bottom:12px}
+.modalHint{font-size:12px;color:var(--text-3);word-break:break-all;margin:0;flex:1;min-width:0}
+.btnCopyIcon{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;padding:8px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface2);color:var(--text-2);cursor:pointer;transition:border-color .12s,color .12s}
+.btnCopyIcon:hover{border-color:var(--accent);color:var(--accent)}
 .modalActions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 .btnClose{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;cursor:pointer}
 .tdActions{width:1%;white-space:nowrap;text-align:right;vertical-align:middle}

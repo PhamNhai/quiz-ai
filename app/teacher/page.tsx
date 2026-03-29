@@ -127,11 +127,10 @@ export default function TeacherDashboardPage() {
     }
   }
 
-  async function copyLink(e: Exam) {
-    const url = examEntryUrl(e.exam_code)
+  async function copyToast(url: string) {
     try {
       await navigator.clipboard.writeText(url)
-      setToast('Đã copy link làm bài')
+      setToast('Đã copy link')
       setTimeout(() => setToast(null), 2800)
     } catch {
       setToast('Không copy được — hãy copy thủ công')
@@ -240,7 +239,23 @@ export default function TeacherDashboardPage() {
             <h3>QR vào làm bài</h3>
             <div className={s.modalQr}>
               {qrSrc ? <img src={qrSrc} alt="" width={240} height={240} /> : null}
-              <p className={s.modalHint}>{qrUrl}</p>
+              <div className={s.modalUrlRow}>
+                <p className={s.modalHint}>{qrUrl}</p>
+                <button
+                  type="button"
+                  className={s.btnCopyIcon}
+                  title="Copy link"
+                  aria-label="Copy link"
+                  onClick={() => void copyToast(qrUrl)}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path
+                      d="M8 3v2h8V3H8zm0 4v12h12V7H8zm2 2h8v8h-8V9zM6 9H4v12h12v-2H6V9z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className={s.modalActions}>
               <button type="button" className={s.btnClose} onClick={() => setQrOpen(false)}>
@@ -407,7 +422,7 @@ export default function TeacherDashboardPage() {
                   <th>Số lượt nộp</th>
                   <th>Kết quả</th>
                   <th>Điểm TB</th>
-                  <th>Làm lại</th>
+                  <th>QR</th>
                   <th>Ngày tạo</th>
                   <th />
                 </tr>
@@ -436,49 +451,63 @@ export default function TeacherDashboardPage() {
                       {ex.subject} · {ex.grade}
                     </td>
                     <td className={s.classCol}>
-                      <div className={s.classPills}>
-                        {ex.classes.length === 0 ? (
-                          <span className={s.pill}>—</span>
-                        ) : (
-                          ex.classes.map(c => (
-                            <span key={c.id} className={s.pill} title={c.name}>
-                              {c.name}
-                              {typeof c.student_count === 'number' ? (
-                                <span className={s.pillFrac}>
-                                  {' '}
-                                  (
-                                  <span className={s.pillDone}>
-                                    {typeof c.done_count === 'number' ? c.done_count : 0}
+                      <div className={s.classColInner}>
+                        <div className={s.classPills}>
+                          {ex.classes.length === 0 ? (
+                            <span className={s.pill}>—</span>
+                          ) : (
+                            ex.classes.map(c => (
+                              <span key={c.id} className={s.pill} title={c.name}>
+                                {c.name}
+                                {typeof c.student_count === 'number' ? (
+                                  <span className={s.pillFrac}>
+                                    {' '}
+                                    (
+                                    <span className={s.pillDone}>
+                                      {typeof c.done_count === 'number' ? c.done_count : 0}
+                                    </span>
+                                    /{c.student_count})
                                   </span>
-                                  /{c.student_count})
-                                </span>
-                              ) : null}
-                            </span>
-                          ))
-                        )}
+                                ) : null}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className={s.btnAssignClass}
+                          title="Gán lớp"
+                          aria-label="Gán lớp"
+                          onClick={() => openAssign(ex)}
+                        >
+                          ✎
+                        </button>
                       </div>
                     </td>
-                    <td>{ex.result_count} bài nộp</td>
+                    <td>{ex.result_count}</td>
                     <td>
                       <Link href={`/teacher/stats/${ex.id}`} className={s.rankLink}>
-                        Bảng xếp hạng
+                        Xem
                       </Link>
                     </td>
                     <td>{ex.avg_score != null ? `${ex.avg_score}%` : '—'}</td>
-                    <td>{ex.allow_retake ? 'Nhiều lần' : '1 lần'}</td>
+                    <td className={s.tdQr}>
+                      <button
+                        type="button"
+                        className={s.btnQrCell}
+                        title="QR làm bài"
+                        aria-label="QR làm bài"
+                        onClick={() => void openQr(ex)}
+                      >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <path fill="currentColor" d="M3 3h4v4H3V3zm2 2v1H4V5h1zm14-2h4v4h-4V3zm2 2v1h-1V5h1zM3 17h4v4H3v-4zm2 2v1H4v-1h1zm7-14h2v2h-2V5zm0 14h2v2h-2v-2zm-2-7h2v2h-2v-2zm4 0h2v2h-2v-2zm2 0h2v2h-2v-2zm2 0h2v2h-2v-2zm-2 4h2v2h-2v-2zm-4 0h2v2h-2v-2zm-2-4h2v2h-2v-2zm-4 0h2v2H8v-2zm0 4h2v2H8v-2zm4 0h2v2h-2v-2z" />
+                        </svg>
+                      </button>
+                    </td>
                     <td className={s.date}>{new Date(ex.created_at).toLocaleDateString('vi-VN')}</td>
                     <td className={s.tdActions}>
                       <TeacherRowMenu
-                        items={[
-                          { label: 'Copy link làm bài', onClick: () => void copyLink(ex) },
-                          { label: 'QR làm bài', onClick: () => void openQr(ex) },
-                          {
-                            label: 'Xem & sửa đề',
-                            onClick: () => router.push(`/teacher/exams/${ex.id}/edit`),
-                          },
-                          { label: 'Gán lớp', onClick: () => openAssign(ex) },
-                          { label: 'Xóa đề', onClick: () => void deleteExam(ex.id) },
-                        ]}
+                        items={[{ label: 'Xóa đề', onClick: () => void deleteExam(ex.id) }]}
                       />
                     </td>
                   </tr>
