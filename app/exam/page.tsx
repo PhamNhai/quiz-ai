@@ -1,16 +1,22 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import s from './entry.module.css'
 
-export default function ExamEntry() {
+function ExamEntryInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const c = searchParams.get('code')
+    if (c) setCode(c.trim().toUpperCase())
+  }, [searchParams])
 
   async function start() {
     if (!name.trim() || !code.trim() || loading) return
@@ -93,5 +99,21 @@ export default function ExamEntry() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ExamEntry() {
+  return (
+    <Suspense
+      fallback={
+        <div className={s.page}>
+          <div className={s.center}>
+            <div className={s.card}>Đang tải…</div>
+          </div>
+        </div>
+      }
+    >
+      <ExamEntryInner />
+    </Suspense>
   )
 }

@@ -1,0 +1,122 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.back {
+  font-size: 14px;
+  color: var(--text-2);
+}
+.back:hover {
+  color: var(--text);
+}
+.navTitle {
+  font-size: 14px;
+  font-weight: 500;
+}
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+.head {
+  margin-bottom: 1.5rem;
+}
+.h1 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--text);
+}
+.meta {
+  font-size: 14px;
+  color: var(--text-2);
+  margin-top: 8px;
+}
+.classLink {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
+.spin {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-2);
+}
+.tableWrap {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  font-size: 13px;
+}
+.table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+}
+.table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+  vertical-align: middle;
+}
+.table tr:last-child td {
+  border-bottom: none;
+}
+.code {
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface2);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.date {
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+}

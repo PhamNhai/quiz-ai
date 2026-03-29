@@ -173,6 +173,7 @@ export default function ClassDetailPage() {
           onChange={e => setCsvText(e.target.value)}
           placeholder={`name,password,note\n"Nguyễn Văn A",pass123,`}
         />
+        <br />
         <button type="button" onClick={importCsv} className={d.btnSec}>
           Nhập từ CSV
         </button>

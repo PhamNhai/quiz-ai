@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { GRADES_ALL, SUBJECTS_ALL } from '@/lib/curriculum'
 import s from './manage/manage.module.css'
 
+type ClassRef = { id: number; name: string }
+
 type Exam = {
   id: number
   exam_code: string
@@ -16,35 +18,78 @@ type Exam = {
   created_at: string
   result_count: number
   avg_score: number | null
+  classes: ClassRef[]
+}
+
+function parseExamClasses(raw: unknown): ClassRef[] {
+  if (!raw) return []
+  if (Array.isArray(raw)) return raw as ClassRef[]
+  if (typeof raw === 'string') {
+    try {
+      const j = JSON.parse(raw) as unknown
+      return Array.isArray(j) ? (j as ClassRef[]) : []
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
+function examEntryUrl(examCode: string): string {
+  if (typeof window === 'undefined') return `/exam?code=${encodeURIComponent(examCode)}`
+  return `${window.location.origin}/exam?code=${encodeURIComponent(examCode)}`
 }
 
 export default function TeacherDashboardPage() {
   const router = useRouter()
   const [exams, setExams] = useState<Exam[]>([])
+  const [allClasses, setAllClasses] = useState<ClassRef[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [subjectFilter, setSubjectFilter] = useState('')
   const [gradeFilter, setGradeFilter] = useState('')
   const [toast, setToast] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadExams()
-  }, [])
+  const [qrOpen, setQrOpen] = useState(false)
+  const [qrSrc, setQrSrc] = useState('')
+  const [qrUrl, setQrUrl] = useState('')
 
-  async function loadExams() {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/exams', { credentials: 'include' })
-      if (res.status === 401) {
-        router.replace('/teacher/login?next=/teacher')
-        return
+  const [assignExam, setAssignExam] = useState<Exam | null>(null)
+  const [assignIds, setAssignIds] = useState<Set<number>>(new Set())
+
+  useEffect(() => {
+    ;(async () => {
+      setLoading(true)
+      try {
+        const [rExams, rCls] = await Promise.all([
+          fetch('/api/exams', { credentials: 'include' }),
+          fetch('/api/classes', { credentials: 'include' }),
+        ])
+        if (rExams.status === 401) {
+          router.replace('/teacher/login?next=/teacher')
+          return
+        }
+        const examData = await rExams.json()
+        const list = Array.isArray(examData) ? examData : []
+        setExams(
+          list.map((e: Record<string, unknown>) => ({
+            ...e,
+            classes: parseExamClasses(e.classes),
+          })) as Exam[]
+        )
+        if (rCls.ok) {
+          const cls = await rCls.json()
+          setAllClasses(
+            Array.isArray(cls)
+              ? cls.map((c: { id: number; name: string }) => ({ id: c.id, name: c.name }))
+              : []
+          )
+        }
+      } finally {
+        setLoading(false)
       }
-      const data = await res.json()
-      setExams(Array.isArray(data) ? data : [])
-    } finally {
-      setLoading(false)
-    }
-  }
+    })()
+  }, [router])
 
   async function deleteExam(id: number) {
     if (!confirm('Xóa đề này? Toàn bộ kết quả liên quan sẽ bị xóa.')) return
@@ -63,6 +108,73 @@ export default function TeacherDashboardPage() {
       setToast('Đã xóa đề thành công')
       setTimeout(() => setToast(null), 3200)
     }
+  }
+
+  async function copyLink(e: Exam) {
+    const url = examEntryUrl(e.exam_code)
+    try {
+      await navigator.clipboard.writeText(url)
+      setToast('Đã copy link làm bài')
+      setTimeout(() => setToast(null), 2800)
+    } catch {
+      setToast('Không copy được — hãy copy thủ công')
+      setTimeout(() => setToast(null), 3200)
+    }
+  }
+
+  async function openQr(e: Exam) {
+    const url = examEntryUrl(e.exam_code)
+    setQrUrl(url)
+    try {
+      const QRCode = (await import('qrcode')).default
+      const src = await QRCode.toDataURL(url, { margin: 1, width: 240 })
+      setQrSrc(src)
+      setQrOpen(true)
+    } catch {
+      setToast('Không tạo được QR')
+      setTimeout(() => setToast(null), 2800)
+    }
+  }
+
+  function openAssign(e: Exam) {
+    setAssignExam(e)
+    setAssignIds(new Set(e.classes.map(c => c.id)))
+  }
+
+  async function saveAssign() {
+    if (!assignExam) return
+    const res = await fetch(`/api/exams/${assignExam.id}/classes`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ classIds: Array.from(assignIds) }),
+    })
+    if (res.status === 401) {
+      router.replace('/teacher/login?next=/teacher')
+      return
+    }
+    const data = await res.json()
+    if (!res.ok) {
+      setToast(data.error ?? 'Lỗi lưu')
+      setTimeout(() => setToast(null), 3200)
+      return
+    }
+    const nextClasses: ClassRef[] = Array.isArray(data.classes)
+      ? data.classes.map((c: { id: number; name: string }) => ({ id: c.id, name: c.name }))
+      : []
+    setExams(prev => prev.map(x => (x.id === assignExam.id ? { ...x, classes: nextClasses } : x)))
+    setAssignExam(null)
+    setToast('Đã cập nhật lớp cho đề')
+    setTimeout(() => setToast(null), 2800)
+  }
+
+  function toggleAssignClass(id: number) {
+    setAssignIds(prev => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
   }
 
   async function logout() {
@@ -97,6 +209,70 @@ export default function TeacherDashboardPage() {
   return (
     <div className={s.page}>
       {toast && <div className={s.toast}>{toast}</div>}
+      {qrOpen && (
+        <div className={s.modalBackdrop} role="presentation" onClick={() => setQrOpen(false)}>
+          <div
+            className={s.modal}
+            role="dialog"
+            aria-label="QR làm bài"
+            onClick={ev => ev.stopPropagation()}
+          >
+            <h3>QR vào làm bài</h3>
+            <div className={s.modalQr}>
+              {qrSrc ? <img src={qrSrc} alt="" width={240} height={240} /> : null}
+              <p className={s.modalHint}>{qrUrl}</p>
+            </div>
+            <div className={s.modalActions}>
+              <button type="button" className={s.btnClose} onClick={() => setQrOpen(false)}>
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {assignExam && (
+        <div className={s.modalBackdrop} role="presentation" onClick={() => setAssignExam(null)}>
+          <div
+            className={s.modal}
+            role="dialog"
+            aria-label="Gán lớp"
+            onClick={ev => ev.stopPropagation()}
+          >
+            <h3>Gán đề — {assignExam.exam_code}</h3>
+            <p className={s.modalHint}>Chọn lớp được phép làm (học sinh đúng tên + mật khẩu trong lớp).</p>
+            {allClasses.length === 0 ? (
+              <p className={s.modalHint}>
+                Chưa có lớp.{' '}
+                <Link href="/teacher/classes" className={s.link}>
+                  Tạo lớp →
+                </Link>
+              </p>
+            ) : (
+              <div className={s.assignList}>
+                {allClasses.map(c => (
+                  <label key={c.id} className={s.assignRow}>
+                    <input
+                      type="checkbox"
+                      checked={assignIds.has(c.id)}
+                      onChange={() => toggleAssignClass(c.id)}
+                    />
+                    <span>{c.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className={s.modalActions}>
+              <button type="button" className={s.btnMini} onClick={() => setAssignExam(null)}>
+                Hủy
+              </button>
+              <button type="button" className={s.btnClose} onClick={() => void saveAssign()}>
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={s.dashTop}>
         <h1 className={s.h1}>Tổng quan đề thi</h1>
         <div className={s.dashActions}>
@@ -178,6 +354,7 @@ export default function TeacherDashboardPage() {
                   <th>Mã đề</th>
                   <th>Chủ đề</th>
                   <th>Môn / Lớp</th>
+                  <th>Lớp được gán</th>
                   <th>Mức độ</th>
                   <th>Kết quả</th>
                   <th>Điểm TB</th>
@@ -196,6 +373,22 @@ export default function TeacherDashboardPage() {
                     <td>
                       {e.subject} · {e.grade}
                     </td>
+                    <td className={s.classCol}>
+                      <div className={s.classPills}>
+                        {e.classes.length === 0 ? (
+                          <span className={s.pill}>—</span>
+                        ) : (
+                          e.classes.map(c => (
+                            <span key={c.id} className={s.pill} title={c.name}>
+                              {c.name}
+                            </span>
+                          ))
+                        )}
+                      </div>
+                      <button type="button" className={s.btnMini} onClick={() => openAssign(e)}>
+                        Gán lớp
+                      </button>
+                    </td>
                     <td>
                       <span className={s.diffBadge}>{diffLabel[e.difficulty] ?? e.difficulty}</span>
                     </td>
@@ -204,7 +397,13 @@ export default function TeacherDashboardPage() {
                     <td>{e.allow_retake ? 'Nhiều lần' : '1 lần'}</td>
                     <td className={s.date}>{new Date(e.created_at).toLocaleDateString('vi-VN')}</td>
                     <td>
-                      <div className={s.actions}>
+                      <div className={`${s.actions} ${s.actionsWide}`}>
+                        <button type="button" className={s.btnMini} onClick={() => copyLink(e)}>
+                          Copy link
+                        </button>
+                        <button type="button" className={s.btnMini} onClick={() => openQr(e)}>
+                          QR
+                        </button>
                         <Link href={`/teacher/stats/${e.id}`} className={s.btnView}>
                           Kết quả
                         </Link>

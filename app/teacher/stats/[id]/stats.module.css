@@ -25,6 +25,8 @@
 .rank3 td{background:#fff5ef}
 .rankCell{font-size:18px;text-align:center;width:60px}
 .nameCell{font-weight:500;color:var(--text)}
+.nameLink{color:var(--accent);text-decoration:underline}
+.nameLink:hover{color:var(--accent-text)}
 .scoreCell{font-weight:600;color:var(--text);font-size:15px}
 .pctWrap{display:flex;align-items:center;gap:10px}
 .pctBar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;min-width:80px}

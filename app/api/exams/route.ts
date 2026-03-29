@@ -10,7 +10,12 @@ export async function GET(req: NextRequest) {
     const rows = (await sql`
       SELECT e.id, e.exam_code, e.topic, e.subject, e.grade, e.difficulty, e.allow_retake, e.created_at,
         COUNT(r.id)::int AS result_count,
-        ROUND(AVG(r.score / r.total_questions * 100))::int AS avg_score
+        ROUND(AVG(r.score / r.total_questions * 100))::int AS avg_score,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', c.id, 'name', c.name) ORDER BY c.name)
+           FROM exam_classes ec JOIN classes c ON c.id = ec.class_id WHERE ec.exam_id = e.id),
+          '[]'::json
+        ) AS classes
       FROM exams e
       LEFT JOIN results r ON r.exam_id = e.id
       GROUP BY e.id
@@ -26,6 +31,7 @@ export async function GET(req: NextRequest) {
       created_at: Date | string
       result_count: number
       avg_score: number | null
+      classes: { id: number; name: string }[] | null
     }>
     return NextResponse.json(rows)
   } catch (err: any) {

@@ -4,7 +4,16 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import s from './stats.module.css'
 
-type Result = { id:number; student_name:string; score:number; total_questions:number; percentage:number; ai_comment:string; submitted_at:string }
+type Result = {
+  id: number
+  student_name: string
+  student_id: number | null
+  score: number
+  total_questions: number
+  percentage: number
+  ai_comment: string
+  submitted_at: string
+}
 
 function toCSV(rows: Result[]): string {
   const header = 'STT,Họ tên,Điểm,Tổng câu,Tỉ lệ (%),Nộp lúc,Nhận xét AI'
@@ -101,7 +110,15 @@ export default function StatsPage() {
                     <td className={s.rankCell}>
                       {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                     </td>
-                    <td className={s.nameCell}>{r.student_name}</td>
+                    <td className={s.nameCell}>
+                      {r.student_id != null ? (
+                        <Link href={`/teacher/students/${r.student_id}`} className={s.nameLink}>
+                          {r.student_name}
+                        </Link>
+                      ) : (
+                        r.student_name
+                      )}
+                    </td>
                     <td className={s.scoreCell}>{r.score}/{r.total_questions}</td>
                     <td>{r.total_questions}</td>
                     <td>
