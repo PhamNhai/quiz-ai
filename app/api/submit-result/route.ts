@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { callGemini, buildCommentPrompt } from '@/lib/gemini'
+import {
+  buildCommentPrompt,
+  callGemini,
+  isGeminiQuotaError,
+  repairLatexAfterJsonParse,
+} from '@/lib/gemini'
 import sql, { initDB, type ExamRow } from '@/lib/db'
 
 const GRACE_MS = 120_000 // 2 phút dư cho độ trễ mạng
@@ -66,15 +71,41 @@ export async function POST(req: NextRequest) {
     const wrongQuestions: string[] = []
     const detailedResults = questions.map((q, i) => {
       const studentAns = answers[i] ?? null
-      const isCorrect  = studentAns === q.answer
+      const isCorrect = studentAns === q.answer
       if (isCorrect) score++
-      else wrongQuestions.push(q.question.slice(0, 50))
-      return { question: q.question, options: q.options, correct: q.answer, studentAnswer: studentAns, isCorrect, explanation: q.explanation }
+      else wrongQuestions.push(String(q.question ?? '').slice(0, 50))
+      const opts = (q.options ?? {}) as Record<string, string>
+      return {
+        question: repairLatexAfterJsonParse(String(q.question ?? '')),
+        options: Object.fromEntries(
+          Object.entries(opts).map(([k, v]) => [k, repairLatexAfterJsonParse(String(v))])
+        ),
+        correct: q.answer,
+        studentAnswer: studentAns,
+        isCorrect,
+        explanation: repairLatexAfterJsonParse(String(q.explanation ?? '')),
+      }
     })
 
-    const aiComment = await callGemini(buildCommentPrompt({
-      subject: exam.subject, score, total: questions.length, studentName, wrongQuestions
-    }))
+    let aiComment: string
+    try {
+      aiComment = await callGemini(
+        buildCommentPrompt({
+          subject: exam.subject,
+          score,
+          total: questions.length,
+          studentName,
+          wrongQuestions,
+        })
+      )
+    } catch (e) {
+      if (isGeminiQuotaError(e)) {
+        aiComment =
+          'Không tạo được nhận xét tự động do hết hạn mức API (Gemini). Bạn vẫn xem được điểm và đáp án chi tiết. Có thể nâng gói hoặc thử lại sau tại Google AI Studio.'
+      } else {
+        throw e
+      }
+    }
 
     const sid = studentId ? Number(studentId) : null
     const saved = (await sql`

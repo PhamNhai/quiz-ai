@@ -1,3 +1,8 @@
+import { AI_QUOTA_MESSAGE_VI } from './ai-quota'
+import { callOpenAICompatChat } from './openai-compat'
+
+export { AI_QUOTA_MESSAGE_VI, GEMINI_QUOTA_MESSAGE_VI, isGeminiQuotaError } from './ai-quota'
+
 /** Mặc định: gemini-2.5-flash. Có thể ghi đè bằng GEMINI_MODEL trong .env */
 const model = () => process.env.GEMINI_MODEL ?? 'gemini-2.5-flash'
 const GEMINI_URL = (key: string) =>
@@ -9,6 +14,26 @@ const defaultSystem = {
       text: 'Bạn là trợ lý giáo dục chuyên tạo đề thi cho học sinh Việt Nam. Giữ nguyên dấu tiếng Việt.',
     },
   ],
+}
+
+/** `gemini` (mặc định) hoặc `openai_compat` (Groq, OpenRouter, Together — API giống OpenAI). */
+export function getAIProvider(): 'gemini' | 'openai_compat' {
+  const p = (process.env.AI_PROVIDER ?? 'gemini').toLowerCase().trim()
+  if (p === 'openai_compat' || p === 'openai') return 'openai_compat'
+  return 'gemini'
+}
+
+function throwGeminiHttpError(res: Response, errBody: unknown): never {
+  const raw =
+    typeof errBody === 'object' && errBody !== null ? JSON.stringify(errBody) : String(errBody)
+  if (res.status === 429) throw new Error(AI_QUOTA_MESSAGE_VI)
+  if (
+    res.status === 403 &&
+    /quota|RESOURCE_EXHAUSTED|exceeded|GenerateRequestsPerDay/i.test(raw)
+  ) {
+    throw new Error(AI_QUOTA_MESSAGE_VI)
+  }
+  throw new Error(`Gemini error ${res.status}: ${raw}`)
 }
 
 /** Schema JSON cố định (Gemini JSON mode) — giảm lỗi parse. */
@@ -40,6 +65,16 @@ const EXAM_ARRAY_SCHEMA = {
 }
 
 export async function callGemini(prompt: string, system?: string): Promise<string> {
+  if (getAIProvider() === 'openai_compat') {
+    return callOpenAICompatChat(
+      [
+        { role: 'system', content: system ?? defaultSystem.parts[0].text },
+        { role: 'user', content: prompt },
+      ],
+      { temperature: 0.55 }
+    )
+  }
+
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('Thiếu GEMINI_API_KEY')
 
@@ -57,7 +92,7 @@ export async function callGemini(prompt: string, system?: string): Promise<strin
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(`Gemini error ${res.status}: ${JSON.stringify(err)}`)
+    throwGeminiHttpError(res, err)
   }
 
   const data = await res.json()
@@ -69,6 +104,18 @@ export async function callGemini(prompt: string, system?: string): Promise<strin
  * Trả về mảng đã parse (ổn định hơn so với text tự do).
  */
 export async function callGeminiExamStructured(prompt: string): Promise<unknown[]> {
+  if (getAIProvider() === 'openai_compat') {
+    const text = await callOpenAICompatChat(
+      [
+        { role: 'system', content: defaultSystem.parts[0].text },
+        { role: 'user', content: prompt },
+      ],
+      { temperature: 0.45 }
+    )
+    if (!text.trim()) throw new Error('Phản hồi rỗng')
+    return extractJSON(text)
+  }
+
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('Thiếu GEMINI_API_KEY')
 
@@ -89,7 +136,7 @@ export async function callGeminiExamStructured(prompt: string): Promise<unknown[
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(`Gemini JSON mode ${res.status}: ${JSON.stringify(err)}`)
+    throwGeminiHttpError(res, err)
   }
 
   const data = await res.json()

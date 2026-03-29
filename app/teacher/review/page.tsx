@@ -73,7 +73,7 @@ export default function ReviewPage() {
               <div className={s.qHeader}>
                 <span className={s.qNum}>Câu {i+1}</span>
               </div>
-              <p className={s.qText}>{q.question}</p>
+              <MathText text={q.question} as="p" className={s.qText} />
               <div className={s.options}>
                 {Object.entries(q.options).map(([k, v]) => (
                   <button key={k} onClick={() => setAnswer(i, k)}

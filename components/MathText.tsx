@@ -18,8 +18,16 @@ export function MathText({ text, as: Tag = 'span', className }: { text: string; 
   return <Tag className={className}>{html}</Tag>
 }
 
+/** Chuẩn hóa delimiter toán: $ fullwidth, \( ... \) → $...$ (một số model dùng AMS inline). */
+function normalizeMathInput(text: string): string {
+  let s = text.replace(/\uFF04/g, '$')
+  s = s.replace(/\\\(([\s\S]*?)\\\)/g, (_, inner: string) => `$${inner.trim()}$`)
+  return s
+}
+
 function buildNodes(text: string): React.ReactNode[] {
   if (!text) return []
+  text = normalizeMathInput(text)
   if (!text.includes('$')) return [text]
 
   const out: React.ReactNode[] = []

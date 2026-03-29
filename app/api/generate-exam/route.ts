@@ -4,6 +4,8 @@ import {
   callGemini,
   callGeminiExamStructured,
   extractJSON,
+  GEMINI_QUOTA_MESSAGE_VI,
+  isGeminiQuotaError,
   normalizeExamQuestions,
 } from '@/lib/gemini'
 import sql, { initDB, generateUniqueCode } from '@/lib/db'
@@ -35,10 +37,16 @@ export async function POST(req: NextRequest) {
         questions = normalizeExamQuestions(rawList)
         break
       } catch (e: any) {
-        lastErr = e.message
+        lastErr = e instanceof Error ? e.message : String(e)
+        if (isGeminiQuotaError(e)) {
+          return NextResponse.json({ error: GEMINI_QUOTA_MESSAGE_VI }, { status: 429 })
+        }
       }
     }
     if (!questions) {
+      if (isGeminiQuotaError(lastErr)) {
+        return NextResponse.json({ error: GEMINI_QUOTA_MESSAGE_VI }, { status: 429 })
+      }
       return NextResponse.json(
         { error: `AI trả về dữ liệu không hợp lệ sau 4 lần thử: ${lastErr}` },
         { status: 500 }

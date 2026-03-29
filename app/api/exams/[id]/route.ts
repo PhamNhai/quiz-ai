@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB, type ExamRow } from '@/lib/db'
+import { repairLatexAfterJsonParse } from '@/lib/gemini'
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -12,7 +13,14 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     const restrictedToClasses = (ec[0]?.c ?? 0) > 0
     // Ẩn đáp án khi trả cho học sinh
     const questions = (exam.content as any[]).map((q, i) => ({
-      index: i, question: q.question, options: q.options
+      index: i,
+      question: repairLatexAfterJsonParse(String(q.question ?? '')),
+      options: Object.fromEntries(
+        Object.entries((q.options ?? {}) as Record<string, string>).map(([k, v]) => [
+          k,
+          repairLatexAfterJsonParse(String(v)),
+        ])
+      ),
     }))
     const durationMin =
       exam.duration_minutes != null && Number(exam.duration_minutes) > 0
