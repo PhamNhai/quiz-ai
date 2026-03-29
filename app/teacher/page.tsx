@@ -39,8 +39,13 @@ export default function TeacherPage() {
       const res  = await fetch('/api/generate-exam', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ subject, grade, topic, subtopic, count: finalCount, difficulty, extra, examCode, allowRetake })
       })
+      if (res.status === 401) {
+        router.replace('/teacher/login?next=/teacher')
+        return
+      }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       // Chuyển sang màn review đáp án

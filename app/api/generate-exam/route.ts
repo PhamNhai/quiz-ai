@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callGemini, buildExamPrompt, extractJSON } from '@/lib/gemini'
 import sql, { initDB, generateUniqueCode } from '@/lib/db'
+import { isTeacherRequest } from '@/lib/teacher-auth'
 
 export async function POST(req: NextRequest) {
   try {
+    if (!(await isTeacherRequest(req)))
+      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
     const { subject, grade, topic, subtopic, count, difficulty, extra, examCode, allowRetake } = await req.json()
     if (!subject || !grade || !topic || !count)
       return NextResponse.json({ error: 'Thiếu thông tin bắt buộc' }, { status: 400 })

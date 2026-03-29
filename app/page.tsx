@@ -12,7 +12,7 @@ export default function Home() {
         <h1 className={styles.headline}>Soạn đề thi<br /><em>thông minh hơn.</em></h1>
         <p className={styles.sub}>Tạo đề trắc nghiệm trong 30 giây. Học sinh làm bài online. AI chấm điểm và nhận xét tức thì.</p>
         <div className={styles.actions}>
-          <Link href="/teacher" className={styles.btnPrimary}>Tạo đề thi <span>→</span></Link>
+          <Link href="/teacher/manage" className={styles.btnPrimary}>Khu vực giáo viên <span>→</span></Link>
           <Link href="/exam" className={styles.btnSecondary}>Làm bài thi</Link>
         </div>
       </section>

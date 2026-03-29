@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql from '@/lib/db'
+import { isTeacherRequest } from '@/lib/teacher-auth'
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
+    if (!(await isTeacherRequest(req)))
+      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
     const rows = (await sql`
       SELECT id, student_name, score, total_questions,
         ROUND((score / total_questions * 100))::int AS percentage,

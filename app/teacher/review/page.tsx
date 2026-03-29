@@ -33,8 +33,13 @@ export default function ReviewPage() {
       const res  = await fetch('/api/update-exam', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ examId: draft.examId, questions })
       })
+      if (res.status === 401) {
+        router.replace('/teacher/login?next=/teacher/review')
+        return
+      }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       sessionStorage.removeItem('review_draft')

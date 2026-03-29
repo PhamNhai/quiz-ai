@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import s from './stats.module.css'
 
@@ -16,15 +16,22 @@ function toCSV(rows: Result[]): string {
 
 export default function StatsPage() {
   const { id }    = useParams<{ id: string }>()
+  const router    = useRouter()
   const [results, setResults] = useState<Result[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/exams/${id}/results`)
-      .then(r => r.json())
-      .then(d => { setResults(Array.isArray(d) ? d : []) })
+    fetch(`/api/exams/${id}/results`, { credentials: 'include' })
+      .then(r => {
+        if (r.status === 401) {
+          router.replace(`/teacher/login?next=${encodeURIComponent(`/teacher/stats/${id}`)}`)
+          return null
+        }
+        return r.json()
+      })
+      .then(d => { if (d) setResults(Array.isArray(d) ? d : []) })
       .finally(() => setLoading(false))
-  }, [id])
+  }, [id, router])
 
   function downloadCSV() {
     const csv  = toCSV(results)

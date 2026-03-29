@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
+import { isTeacherRequest } from '@/lib/teacher-auth'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    if (!(await isTeacherRequest(req)))
+      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
     await initDB()
     const rows = (await sql`
       SELECT e.id, e.exam_code, e.topic, e.subject, e.grade, e.difficulty, e.allow_retake, e.created_at,
@@ -32,6 +35,8 @@ export async function GET() {
 
 export async function DELETE(req: NextRequest) {
   try {
+    if (!(await isTeacherRequest(req)))
+      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
     const { id } = await req.json()
     await sql`DELETE FROM exams WHERE id = ${id}`
     return NextResponse.json({ success: true })

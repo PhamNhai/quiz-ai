@@ -98,7 +98,6 @@ export default function ResultPage() {
 
         <div className={s.footerActions}>
           <Link href="/exam" className={s.btnAgain}>Làm bài khác</Link>
-          <Link href="/teacher" className={s.btnTeacher}>Tạo đề mới</Link>
         </div>
       </div>
     </div>
