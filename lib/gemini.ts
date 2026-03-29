@@ -17,7 +17,11 @@ const EXAM_ARRAY_SCHEMA = {
   items: {
     type: 'object',
     properties: {
-      question: { type: 'string', description: 'Đề bài, có thể chứa LaTeX trong $...$' },
+      question: {
+        type: 'string',
+        description:
+          'Đề bài. LaTeX trong $...$: mọi lệnh dùng hai dấu \\ (vd \\\\frac) vì JSON.',
+      },
       options: {
         type: 'object',
         properties: {
@@ -97,6 +101,33 @@ export async function callGeminiExamStructured(prompt: string): Promise<unknown[
   return parsed
 }
 
+/**
+ * JSON.parse coi \\f, \\r, \\t, \\n, \\b là ký tự điều khiển → LaTeX \\frac, \\text, \\rightarrow bị vỡ.
+ * Sửa các mảnh phổ biến sau khi đã parse.
+ */
+export function repairLatexAfterJsonParse(s: string): string {
+  if (!s) return s
+  let out = s
+  // ♀ / ký tự lạ khi hiển thị form feed
+  out = out.replace(/♀rac/g, '\\frac')
+  out = out.replace(/\u000Crac/g, '\\frac')
+  out = out.replace(/\u000Cforall/g, '\\forall')
+  out = out.replace(/\u000Dightarrow/g, '\\rightarrow')
+  out = out.replace(/\u000Dight(?=[\)\]\}])/g, '\\right')
+  out = out.replace(/\u000Dight\(/g, '\\right(')
+  out = out.replace(/\u0009ext\{/g, '\\text{')
+  out = out.replace(/\u0009ext\b/g, '\\text')
+  out = out.replace(/\u0009an\b/g, '\\tan')
+  out = out.replace(/\u0009heta/g, '\\theta')
+  out = out.replace(/\u000Aeq\b/g, '\\neq')
+  out = out.replace(/\u000Aabla/g, '\\nabla')
+  out = out.replace(/\u000Aotin/g, '\\notin')
+  out = out.replace(/\u0008egin/g, '\\begin')
+  out = out.replace(/\u0008eta\b/g, '\\beta')
+  out = out.replace(/\u0008inom/g, '\\binom')
+  return out
+}
+
 /** Kiểm tra từng phần tử có đủ field tối thiểu. */
 export function normalizeExamQuestions(raw: unknown[]): any[] {
   return raw.map((item, i) => {
@@ -104,10 +135,10 @@ export function normalizeExamQuestions(raw: unknown[]): any[] {
     if (!q || typeof q.question !== 'string') throw new Error(`Câu ${i + 1}: thiếu question`)
     const opt = q.options as Record<string, string> | undefined
     if (!opt || typeof opt !== 'object') throw new Error(`Câu ${i + 1}: thiếu options`)
-    const A = opt.A ?? opt.a ?? ''
-    const B = opt.B ?? opt.b ?? ''
-    const C = opt.C ?? opt.c ?? ''
-    const D = opt.D ?? opt.d ?? ''
+    const A = repairLatexAfterJsonParse(opt.A ?? opt.a ?? '')
+    const B = repairLatexAfterJsonParse(opt.B ?? opt.b ?? '')
+    const C = repairLatexAfterJsonParse(opt.C ?? opt.c ?? '')
+    const D = repairLatexAfterJsonParse(opt.D ?? opt.d ?? '')
     for (const [k, v] of Object.entries({ A, B, C, D })) {
       if (typeof v !== 'string' || !v.trim()) throw new Error(`Câu ${i + 1}: thiếu phương án ${k}`)
     }
@@ -116,10 +147,10 @@ export function normalizeExamQuestions(raw: unknown[]): any[] {
       .toUpperCase()
     if (!['A', 'B', 'C', 'D'].includes(ans)) throw new Error(`Câu ${i + 1}: answer không hợp lệ`)
     return {
-      question: q.question,
+      question: repairLatexAfterJsonParse(q.question),
       options: { A, B, C, D },
       answer: ans,
-      explanation: typeof q.explanation === 'string' ? q.explanation : '',
+      explanation: repairLatexAfterJsonParse(typeof q.explanation === 'string' ? q.explanation : ''),
     }
   })
 }
@@ -181,17 +212,19 @@ export function buildExamPrompt(p: {
 
   const mathHint = isMath
     ? `
-Toán học: mọi công thức, biểu thức, ký hiệu toán phải viết bằng LaTeX trong cặp dấu đôla $...$ (inline), ví dụ: $x^2+1$, $\\frac{a}{b}$, $\\sqrt{2}$, $\\int_0^1 f(x)\\,dx$. Có thể dùng $$...$$ cho công thức hiển thị riêng dòng.
+Toán học — LaTeX trong $...$ hoặc $$...$$.
+QUAN TRỌNG (JSON): Trong mỗi chuỗi JSON, mọi lệnh LaTeX bắt đầu bằng \\ phải ghi HAI dấu gạch chéo ngược: ví dụ \\\\frac{a}{b}, \\\\sqrt{x}, \\\\rightarrow, \\\\text{...}, \\\\in, \\\\neq (một dấu \\ sẽ bị JSON hiểu nhầm thành ký tự điều khiển và làm hỏng công thức).
+Ví dụ đúng trong JSON: "$x^2$ và $\\\\frac{1}{2}$" — sau khi parse sẽ hiển thị đúng.
 `
     : `
-Nếu có biểu thức toán/công thức, cũng dùng LaTeX trong $...$ như trên.
+Nếu có biểu thức toán, dùng LaTeX trong $...$; trong chuỗi JSON ghi lệnh LaTeX với hai dấu \\\\ như mục toán (\\\\frac, \\\\sqrt, ...).
 `
 
   return `Tạo đúng ${p.count} câu trắc nghiệm 4 phương án (A–D), môn ${p.subject}, khối ${p.grade}, chủ đề "${p.topic}"${p.subtopic ? `, chuyên đề "${p.subtopic}"` : ''}.
 Mức độ: ${diffMap[p.difficulty] ?? p.difficulty}.
 ${p.extra ? `Yêu cầu thêm: ${p.extra}` : ''}
 ${mathHint}
-Mỗi phần tử JSON gồm: question (string), options (object với khóa A,B,C,D), answer ("A"|"B"|"C"|"D"), explanation (string).
+Mỗi phần tử JSON gồm: question (string), options (object với khóa A,B,C,D), answer ("A"|"B"|"C"|"D"), explanation (string) — giải thích ngắn gọn, chỉ nội dung học thuật, KHÔNG viết lời tự sửa kiểu "Oops", "nhầm", "re-evaluate".
 Chỉ trả về MẢNG JSON theo schema, không markdown, không chữ thừa ngoài JSON.`
 }
 
