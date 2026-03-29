@@ -23,26 +23,58 @@
   border-bottom: 1px solid var(--border);
   margin-bottom: 0;
 }
-.userLine {
-  margin: 0 1.25rem 0.35rem;
-  padding: 0 1.25rem;
-  font-size: 14px;
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0.85rem 0.85rem;
+  padding: 10px 10px 12px;
+  border-radius: var(--radius-lg, 12px);
+  background: linear-gradient(135deg, var(--surface2, #f4f4f5) 0%, var(--surface, #fff) 100%);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.userAvatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(145deg, var(--accent, #6366f1) 0%, #4f46e5 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.userMeta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.userName {
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
-  line-height: 1.35;
-}
-.homeRow {
-  margin: 0 0 0.75rem;
-  padding: 0 0 0.75rem 1.25rem;
-  border-bottom: 1px solid var(--border);
+  line-height: 1.3;
+  word-break: break-word;
 }
 .homeLink {
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--accent);
   text-decoration: none;
+  width: fit-content;
+  padding: 2px 0;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s, color 0.15s;
 }
 .homeLink:hover {
-  text-decoration: underline;
+  border-bottom-color: var(--accent);
+  color: var(--accent-text, #4338ca);
 }
 .nav {
   display: flex;
@@ -101,6 +133,42 @@
   font-size: 13px;
   color: var(--text-3);
 }
+.asideFooter {
+  padding: 0.75rem 1rem 0;
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+}
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong, #e4e4e7);
+  border-radius: var(--radius, 8px);
+  background: var(--surface, #fff);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.logoutBtn:hover {
+  background: var(--surface2, #fafafa);
+  border-color: var(--danger, #dc2626);
+  color: var(--danger, #dc2626);
+}
+.logoutBtn:active {
+  transform: scale(0.98);
+}
+.logoutIcon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.logoutBtn:hover .logoutIcon {
+  opacity: 1;
+}
 .main {
   flex: 1;
   min-width: 0;
@@ -122,14 +190,17 @@
     padding-bottom: 0.5rem;
     margin-bottom: 0.5rem;
   }
-  .userLine {
-    padding: 0 1rem;
-    margin-bottom: 0.25rem;
+  .userCard {
+    margin: 0 0.75rem 0.65rem;
+    padding: 8px 10px 10px;
   }
-  .homeRow {
-    padding-left: 1rem;
-    margin-bottom: 0.5rem;
-    padding-bottom: 0.5rem;
+  .userAvatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+  .userName {
+    font-size: 12px;
   }
   .nav {
     flex-direction: row;

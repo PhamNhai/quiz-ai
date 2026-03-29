@@ -1,12 +1,13 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStaffMe } from '../useStaffMe'
 import { ClassMultiSelect } from '@/components/ClassMultiSelect'
 import { GRADES_ALL, SUBJECTS_ALL, getSubtopics } from '@/lib/curriculum'
 import s from '../teacher.module.css'
 
-/** Gợi ý nhanh — có thể nhập số tùy ý (1–100), không bắt bội số 5. */
+const MAX_QUESTIONS = 30
+/** Gợi ý nhanh — có thể nhập số tùy ý (1–30), không cần bấm chip. */
 const COUNTS = [7, 12, 18, 24]
 const DIFFS = [
   { v: 'easy', l: 'Dễ', d: 'Nhận biết' },
@@ -47,8 +48,21 @@ export default function CreateExamPage() {
       .catch(() => {})
   }, [me?.role, router])
 
-  const finalCount = count || (customCount ? parseInt(customCount) : 0)
-  const canSubmit = subject && grade && topic.trim() && finalCount >= 5
+  /** Ưu tiên ô nhập tùy ý; không bắt chọn chip trước. */
+  const finalCount = useMemo(() => {
+    const t = customCount.trim()
+    if (t !== '') {
+      const p = parseInt(t, 10)
+      return Number.isFinite(p) && p > 0 ? p : 0
+    }
+    if (typeof count === 'number' && count > 0) return count
+    return 0
+  }, [count, customCount])
+
+  const canSubmit =
+    Boolean(subject && grade && topic.trim()) &&
+    finalCount >= 1 &&
+    finalCount <= MAX_QUESTIONS
   const suggestions = getSubtopics(subject, grade)
 
   async function handleSubmit() {
@@ -347,7 +361,9 @@ export default function CreateExamPage() {
           )}
         </button>
         {!canSubmit && (
-          <p className={s.hint}>Chọn Môn học, Khối lớp, nhập Chủ đề và Số câu (1–100, tùy ý).</p>
+          <p className={s.hint}>
+            Chọn Môn học, Khối lớp, nhập Chủ đề và số câu từ 1 đến {MAX_QUESTIONS} (gõ ô tùy ý hoặc chọn chip).
+          </p>
         )}
       </div>
     </div>

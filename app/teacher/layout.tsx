@@ -28,6 +28,15 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     me &&
     (me.displayName && me.displayName.trim() ? me.displayName.trim() : me.username)
 
+  const userInitials = (() => {
+    if (!userLabel) return '?'
+    const parts = userLabel.trim().split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) {
+      return `${parts[0]!.charAt(0)}${parts[parts.length - 1]!.charAt(0)}`.toUpperCase()
+    }
+    return userLabel.slice(0, 2).toUpperCase()
+  })()
+
   async function logout() {
     await fetch('/api/auth/teacher', { method: 'DELETE', credentials: 'include' })
     router.replace('/teacher/login')
@@ -41,14 +50,17 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           QuizAI
         </Link>
         {userLabel ? (
-          <>
-            <p className={s.userLine}>{userLabel}</p>
-            <div className={s.homeRow}>
+          <div className={s.userCard}>
+            <div className={s.userAvatar} aria-hidden>
+              {userInitials}
+            </div>
+            <div className={s.userMeta}>
+              <span className={s.userName}>{userLabel}</span>
               <Link href="/" className={s.homeLink}>
                 Trang chủ
               </Link>
             </div>
-          </>
+          </div>
         ) : null}
         <nav className={s.nav}>
           {showExamNav && (
@@ -97,6 +109,12 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         </nav>
         <div className={s.asideFooter}>
           <button type="button" className={s.logoutBtn} onClick={() => void logout()}>
+            <svg className={s.logoutIcon} width="18" height="18" viewBox="0 0 24 24" aria-hidden>
+              <path
+                fill="currentColor"
+                d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5a2 2 0 00-2 2v3h2V5h14v14H5v-3H3v3a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z"
+              />
+            </svg>
             Đăng xuất
           </button>
         </div>

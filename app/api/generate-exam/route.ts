@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
     if (!subject || !grade || !topic || count == null || count === '')
       return NextResponse.json({ error: 'Thiếu thông tin bắt buộc' }, { status: 400 })
     const n = Number(count)
-    if (!Number.isFinite(n) || n < 1 || n > 100) {
-      return NextResponse.json({ error: 'Số câu phải từ 1 đến 100' }, { status: 400 })
+    if (!Number.isFinite(n) || n < 1 || n > 30) {
+      return NextResponse.json({ error: 'Số câu phải từ 1 đến 30' }, { status: 400 })
     }
 
     const prompt = buildExamPrompt({
