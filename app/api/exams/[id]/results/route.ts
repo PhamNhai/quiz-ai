@@ -19,6 +19,7 @@ async function enrichStudentIds(
     percentage: number
     ai_comment: string | null
     submitted_at: Date | string
+    attempt_count: number
   }>
 ) {
   if (!rows.some(r => r.student_id == null)) return rows
@@ -55,11 +56,19 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const allowed = await getExamIfAllowed(session, Number(params.id))
     if (!allowed) return forbidden()
     let rows = (await sql`
-      SELECT id, student_name, student_id, score, total_questions,
-        ROUND((score / total_questions * 100))::int AS percentage,
-        ai_comment, submitted_at
-      FROM results
-      WHERE exam_id = ${params.id}
+      SELECT r.id, r.student_name, r.student_id, r.score, r.total_questions,
+        ROUND((r.score / r.total_questions * 100))::int AS percentage,
+        r.ai_comment, r.submitted_at,
+        (
+          SELECT COUNT(*)::int FROM results r2
+          WHERE r2.exam_id = r.exam_id
+          AND (
+            (r.student_id IS NOT NULL AND r2.student_id = r.student_id)
+            OR (r.student_id IS NULL AND r2.student_id IS NULL AND r2.student_name = r.student_name)
+          )
+        ) AS attempt_count
+      FROM results r
+      WHERE r.exam_id = ${params.id}
       ORDER BY percentage DESC, submitted_at ASC
     `) as Array<{
       id: number
@@ -70,6 +79,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       percentage: number
       ai_comment: string | null
       submitted_at: Date | string
+      attempt_count: number
     }>
     rows = await enrichStudentIds(params.id, rows)
     return NextResponse.json(rows)

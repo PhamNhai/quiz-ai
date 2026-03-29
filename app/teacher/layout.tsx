@@ -8,6 +8,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname()
   const me = useStaffMe()
   const noShell =
+    pathname.startsWith('/teacher/login') ||
     pathname.startsWith('/teacher/review') ||
     pathname.startsWith('/teacher/success') ||
     pathname.startsWith('/teacher/stats')

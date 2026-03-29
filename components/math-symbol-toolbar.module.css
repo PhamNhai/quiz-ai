@@ -1,0 +1,31 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background: var(--surface2, #f4f4f5);
+  border: 1px solid var(--border, #e4e4e7);
+  border-radius: var(--radius, 8px);
+}
+.btn {
+  min-width: 2.25rem;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: ui-serif, 'Times New Roman', serif;
+  line-height: 1.2;
+  border: 1px solid var(--border-strong, #d4d4d8);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: var(--text, #18181b);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.btn:hover {
+  background: var(--accent-light, #e0e7ff);
+  border-color: var(--accent, #6366f1);
+}
+.btn:active {
+  transform: scale(0.98);
+}

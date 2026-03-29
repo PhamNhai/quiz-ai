@@ -36,7 +36,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
           THEN ROUND((r.score / r.total_questions * 100))::int
           ELSE NULL
         END AS percentage,
-        r.submitted_at
+        r.submitted_at,
+        (SELECT COUNT(*)::int FROM results rx WHERE rx.student_id = cs.id AND rx.exam_id = ${examId}) AS attempt_count
       FROM class_students cs
       LEFT JOIN LATERAL (
         SELECT id, score, total_questions, submitted_at
@@ -55,6 +56,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
       total_questions: number | null
       percentage: number | null
       submitted_at: Date | string | null
+      attempt_count: number
     }>
 
     return NextResponse.json({

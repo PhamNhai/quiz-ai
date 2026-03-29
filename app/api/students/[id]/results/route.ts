@@ -32,7 +32,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         e.created_by,
         r.score, r.total_questions,
         ROUND((r.score / r.total_questions * 100))::int AS percentage,
-        r.submitted_at
+        r.submitted_at,
+        (
+          SELECT COUNT(*)::int FROM results r2
+          WHERE r2.exam_id = r.exam_id AND r2.student_id = ${sid}
+        ) AS attempt_count
       FROM results r
       JOIN exams e ON e.id = r.exam_id
       WHERE r.student_id = ${sid}
@@ -49,6 +53,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       total_questions: number
       percentage: number
       submitted_at: Date | string
+      attempt_count: number
     }>
 
     const filtered = rows.filter(row =>

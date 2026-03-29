@@ -1,11 +1,54 @@
 'use client'
 
+import { useRef } from 'react'
+import { MathSymbolToolbar, insertAtCursor } from '@/components/MathSymbolToolbar'
 import { MathText } from '@/components/MathText'
 import type { ExamQuestion } from '@/lib/exam-question'
 import { emptyExamQuestion } from '@/lib/exam-question'
 import s from './exam-editor-form.module.css'
 
 const KEYS = ['A', 'B', 'C', 'D'] as const
+
+function FieldWithMathToolbar(props: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  rows?: number
+  placeholder?: string
+  className?: string
+}) {
+  const { label, value, onChange, rows = 3, placeholder, className } = props
+  const ref = useRef<HTMLTextAreaElement>(null)
+
+  const insert = (snippet: string) => {
+    const el = ref.current
+    if (!el) {
+      onChange(value + snippet)
+      return
+    }
+    const { next, caret } = insertAtCursor(el, value, snippet)
+    onChange(next)
+    requestAnimationFrame(() => {
+      ref.current?.setSelectionRange(caret, caret)
+    })
+  }
+
+  return (
+    <div className={className}>
+      <label className={s.label}>{label}</label>
+      <p className={s.toolbarHint}>Bộ gõ nhanh (chèn vào ô dưới):</p>
+      <MathSymbolToolbar onInsert={insert} />
+      <textarea
+        ref={ref}
+        className={s.textarea}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+      />
+    </div>
+  )
+}
 
 export function ExamEditorForm(props: {
   questions: ExamQuestion[]
@@ -51,26 +94,22 @@ export function ExamEditorForm(props: {
             </button>
           </div>
 
-          <label className={s.label}>Nội dung câu hỏi</label>
-          <textarea
-            className={s.textarea}
+          <FieldWithMathToolbar
+            label="Nội dung câu hỏi"
             value={q.question}
-            onChange={e => patch(i, { question: e.target.value })}
+            onChange={v => patch(i, { question: v })}
             rows={3}
             placeholder="Nhập đề bài / câu hỏi (hỗ trợ LaTeX $...$)"
           />
 
           <div className={s.optGrid}>
             {KEYS.map(k => (
-              <div key={k} className={s.optRow}>
-                <span className={s.optKey}>{k}</span>
-                <input
-                  className={s.input}
-                  value={q.options[k]}
-                  onChange={e => patchOption(i, k, e.target.value)}
-                  placeholder={`Phương án ${k}`}
-                />
-              </div>
+              <OptionRow
+                key={k}
+                k={k}
+                value={q.options[k]}
+                onChange={v => patchOption(i, k, v)}
+              />
             ))}
           </div>
 
@@ -91,15 +130,13 @@ export function ExamEditorForm(props: {
             </select>
           </div>
 
-          <label className={s.label} style={{ marginTop: 10 }}>
-            Giải thích / gợi ý (tùy chọn)
-          </label>
-          <textarea
-            className={s.textarea}
+          <FieldWithMathToolbar
+            label="Giải thích / gợi ý (tùy chọn)"
             value={q.explanation}
-            onChange={e => patch(i, { explanation: e.target.value })}
+            onChange={v => patch(i, { explanation: v })}
             rows={2}
             placeholder="Giải thích cho học sinh sau khi nộp bài"
+            className={s.fieldSpaced}
           />
 
           <div className={s.preview}>
@@ -108,12 +145,68 @@ export function ExamEditorForm(props: {
               <MathText text={q.question || '…'} as="div" />
             </div>
           </div>
+
+          <div className={s.preview}>
+            <strong>Preview phương án & đáp án đúng:</strong>
+            <ul className={s.optPreviewList}>
+              {KEYS.map(k => (
+                <li
+                  key={k}
+                  className={`${s.optPreviewItem} ${k === q.answer ? s.optPreviewCorrect : ''}`}
+                >
+                  <span className={s.optPreviewKey}>{k}.</span>
+                  <span className={s.optPreviewBody}>
+                    <MathText text={q.options[k] || '…'} as="span" />
+                  </span>
+                  {k === q.answer ? (
+                    <span className={s.optPreviewBadge}>Đáp án đúng</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       ))}
 
       <button type="button" className={s.addBtn} onClick={add}>
         + Thêm câu hỏi
       </button>
+    </div>
+  )
+}
+
+function OptionRow(props: {
+  k: (typeof KEYS)[number]
+  value: string
+  onChange: (v: string) => void
+}) {
+  const { k, value, onChange } = props
+  const ref = useRef<HTMLInputElement>(null)
+  const insert = (snippet: string) => {
+    const el = ref.current
+    if (!el) {
+      onChange(value + snippet)
+      return
+    }
+    const { next, caret } = insertAtCursor(el, value, snippet)
+    onChange(next)
+    requestAnimationFrame(() => {
+      ref.current?.setSelectionRange(caret, caret)
+    })
+  }
+  return (
+    <div className={s.optRow}>
+      <span className={s.optKey}>{k}</span>
+      <div className={s.optField}>
+        <MathSymbolToolbar onInsert={insert} />
+        <input
+          ref={ref}
+          className={s.input}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={`Phương án ${k}`}
+        />
+      </div>
     </div>
   )
 }

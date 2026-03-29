@@ -2,6 +2,9 @@
 .nav{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
 .back{font-size:14px;color:var(--text-2)}.back:hover{color:var(--text)}
 .navTitle{font-size:14px;font-weight:500}
+.examCodeLink{font-family:monospace;font-weight:600;color:var(--accent)}
+.examCodeLink:hover{text-decoration:underline}
+.attemptCell{font-size:13px;white-space:nowrap}
 .container{max-width:900px;margin:0 auto;padding:2rem 1.25rem}
 .statCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:2rem}
 .statCard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;text-align:center}

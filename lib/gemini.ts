@@ -247,6 +247,9 @@ export function repairLatexAfterJsonParse(s: string): string {
   out = out.replace(/\u0008egin/g, '\\begin')
   out = out.replace(/\u0008eta\b/g, '\\beta')
   out = out.replace(/\u0008inom/g, '\\binom')
+  // Mất \ do JSON / chuỗi tách: "frac{" → "\frac{" (không đụng đã có \\)
+  out = out.replace(/(^|[^\\])frac\{/g, '$1\\frac{')
+  out = out.replace(/(^|[^\\])sqrt\{/g, '$1\\sqrt{')
   return out
 }
 

@@ -17,7 +17,19 @@ export async function GET(req: NextRequest) {
         COUNT(r.id)::int AS result_count,
         ROUND(AVG(r.score / r.total_questions * 100))::int AS avg_score,
         COALESCE(
-          (SELECT json_agg(json_build_object('id', c.id, 'name', c.name) ORDER BY c.name)
+          (SELECT json_agg(
+            json_build_object(
+              'id', c.id,
+              'name', c.name,
+              'student_count', (SELECT COUNT(*)::int FROM class_students cs2 WHERE cs2.class_id = c.id),
+              'done_count', (
+                SELECT COUNT(DISTINCT r2.student_id)::int
+                FROM results r2
+                INNER JOIN class_students cs3 ON cs3.id = r2.student_id AND cs3.class_id = c.id
+                WHERE r2.exam_id = e.id
+              )
+            ) ORDER BY c.name
+          )
            FROM exam_classes ec JOIN classes c ON c.id = ec.class_id WHERE ec.exam_id = e.id),
           '[]'::json
         ) AS classes
@@ -36,14 +48,31 @@ export async function GET(req: NextRequest) {
             created_at: Date | string
             result_count: number
             avg_score: number | null
-            classes: { id: number; name: string }[] | null
+            classes: {
+              id: number
+              name: string
+              student_count?: number
+              done_count?: number
+            }[] | null
           }>)
         : ((await sql`
       SELECT e.id, e.exam_code, e.topic, e.subject, e.grade, e.difficulty, e.allow_retake, e.created_at,
         COUNT(r.id)::int AS result_count,
         ROUND(AVG(r.score / r.total_questions * 100))::int AS avg_score,
         COALESCE(
-          (SELECT json_agg(json_build_object('id', c.id, 'name', c.name) ORDER BY c.name)
+          (SELECT json_agg(
+            json_build_object(
+              'id', c.id,
+              'name', c.name,
+              'student_count', (SELECT COUNT(*)::int FROM class_students cs2 WHERE cs2.class_id = c.id),
+              'done_count', (
+                SELECT COUNT(DISTINCT r2.student_id)::int
+                FROM results r2
+                INNER JOIN class_students cs3 ON cs3.id = r2.student_id AND cs3.class_id = c.id
+                WHERE r2.exam_id = e.id
+              )
+            ) ORDER BY c.name
+          )
            FROM exam_classes ec JOIN classes c ON c.id = ec.class_id WHERE ec.exam_id = e.id),
           '[]'::json
         ) AS classes
@@ -63,7 +92,12 @@ export async function GET(req: NextRequest) {
             created_at: Date | string
             result_count: number
             avg_score: number | null
-            classes: { id: number; name: string }[] | null
+            classes: {
+              id: number
+              name: string
+              student_count?: number
+              done_count?: number
+            }[] | null
           }>)
 
     return NextResponse.json(rows)

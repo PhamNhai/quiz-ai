@@ -18,6 +18,7 @@ type Attempt = {
   total_questions: number
   percentage: number
   submitted_at: string
+  attempt_count?: number
 }
 
 export default function StudentDetailPage() {
@@ -123,7 +124,9 @@ export default function StudentDetailPage() {
                     {attempts.map(a => (
                       <tr key={a.id}>
                         <td>
-                          <span className={s.code}>{a.exam_code}</span>
+                          <Link href={`/teacher/exams/${a.exam_id}/edit`} className={s.code}>
+                            {a.exam_code}
+                          </Link>
                         </td>
                         <td>{a.topic}</td>
                         <td>
@@ -133,6 +136,9 @@ export default function StudentDetailPage() {
                           {a.score}/{a.total_questions}
                         </td>
                         <td>{a.percentage}%</td>
+                        <td>
+                          {typeof a.attempt_count === 'number' ? `${a.attempt_count} lần` : '—'}
+                        </td>
                         <td className={s.date}>
                           {new Date(a.submitted_at).toLocaleString('vi-VN')}
                         </td>

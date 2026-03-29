@@ -29,6 +29,16 @@
 .table tr:last-child td{border-bottom:none}
 .table tr:hover td{background:var(--surface2)}
 .code{font-family:monospace;font-size:13px;font-weight:600;color:var(--text);background:var(--surface2);padding:2px 8px;border-radius:4px}
+.codeRow{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
+.codeLink{font-family:monospace;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none}
+.codeLink:hover{text-decoration:underline}
+.btnEditCode{padding:2px 6px;font-size:14px;line-height:1;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text-2);cursor:pointer}
+.btnEditCode:hover{border-color:var(--accent);color:var(--accent)}
+.pillFrac{font-weight:500;color:var(--text-3)}
+.pillDone{color:var(--success,#16a34a);font-weight:600}
+.rankLink{font-size:12px;font-weight:500;color:var(--accent);white-space:nowrap}
+.rankLink:hover{text-decoration:underline}
+.resultSub{font-size:11px;color:var(--text-3)}
 .topic{color:var(--text);font-weight:500;max-width:200px}
 .diffBadge{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--text-2);border:1px solid var(--border)}
 .date{white-space:nowrap;color:var(--text-3)}

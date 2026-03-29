@@ -16,16 +16,17 @@ type Result = {
   percentage: number
   ai_comment: string
   submitted_at: string
+  attempt_count?: number
 }
 
 function buildResultsCsv(rows: Result[]): string {
-  const header = ['STT', 'Họ tên', 'Điểm', 'Tổng câu', 'Tỉ lệ (%)', 'Nộp lúc']
+  const header = ['STT', 'Họ tên', 'Điểm', 'Tỉ lệ (%)', 'Lần làm', 'Nộp lúc']
   const data = rows.map((r, i) => [
     i + 1,
     r.student_name,
     excelSafeScoreText(r.score, r.total_questions),
-    r.total_questions,
     r.percentage,
+    typeof r.attempt_count === 'number' ? r.attempt_count : '',
     new Date(r.submitted_at).toLocaleString('vi-VN'),
   ])
   return toExcelCsv(header, data)
@@ -37,6 +38,7 @@ export default function StatsPage() {
   const [results, setResults] = useState<Result[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<{ resultId: number; studentId: number | null } | null>(null)
+  const [examCode, setExamCode] = useState('')
 
   useEffect(() => {
     fetch(`/api/exams/${id}/results`, { credentials: 'include' })
@@ -51,8 +53,16 @@ export default function StatsPage() {
         }
         return r.json()
       })
-      .then(d => { if (d) setResults(Array.isArray(d) ? d : []) })
+      .then(d => {
+        if (d) setResults(Array.isArray(d) ? d : [])
+      })
       .finally(() => setLoading(false))
+    fetch(`/api/teacher/exams/${id}`, { credentials: 'include' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        if (d?.examCode) setExamCode(String(d.examCode))
+      })
+      .catch(() => {})
   }, [id, router])
 
   function downloadCSV() {
@@ -113,8 +123,12 @@ export default function StatsPage() {
             <table className={s.table}>
               <thead>
                 <tr>
-                  <th>Xếp hạng</th><th>Họ và tên</th><th>Điểm</th>
-                  <th>Tổng câu</th><th>Tỉ lệ</th><th>Thời gian nộp</th>
+                  <th>Xếp hạng</th>
+                  <th>Họ và tên</th>
+                  <th>Kết quả</th>
+                  <th>Tỉ lệ</th>
+                  <th>Lần làm</th>
+                  <th>Nộp lúc</th>
                   <th />
                 </tr>
               </thead>
@@ -134,7 +148,6 @@ export default function StatsPage() {
                       )}
                     </td>
                     <td className={s.scoreCell}>{r.score}/{r.total_questions}</td>
-                    <td>{r.total_questions}</td>
                     <td>
                       <div className={s.pctWrap}>
                         <div className={s.pctBar}>
@@ -145,6 +158,9 @@ export default function StatsPage() {
                         </div>
                         <span className={s.pctNum}>{r.percentage}%</span>
                       </div>
+                    </td>
+                    <td className={s.attemptCell}>
+                      {typeof r.attempt_count === 'number' ? `${r.attempt_count} lần` : '—'}
                     </td>
                     <td className={s.dateCell}>{new Date(r.submitted_at).toLocaleString('vi-VN')}</td>
                     <td className={s.actions}>

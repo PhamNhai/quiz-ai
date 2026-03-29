@@ -199,6 +199,12 @@ export function TeacherResultDetailModal(props: {
                   {detail.result.score}/{detail.result.total_questions} ({detail.result.percentage}%)
                 </div>
               </div>
+              {canListAttempts && attempts.length > 0 ? (
+                <div>
+                  <div className={s.metaLabel}>Lần làm đề này</div>
+                  <div className={s.metaVal}>{attempts.length} lần</div>
+                </div>
+              ) : null}
             </div>
           </>
         )}

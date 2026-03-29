@@ -124,6 +124,59 @@
 .preview strong {
   color: var(--text-2);
 }
+.toolbarHint {
+  font-size: 11px;
+  color: var(--text-3);
+  margin: 0 0 4px;
+}
+.fieldSpaced {
+  margin-top: 12px;
+}
+.optField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.optPreviewList {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.optPreviewItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.optPreviewCorrect {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.optPreviewKey {
+  font-weight: 600;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.optPreviewBody {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-size: 14px;
+}
+.optPreviewBadge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent-text);
+  flex-shrink: 0;
+}
 .addBtn {
   margin-top: 4px;
   padding: 10px 16px;

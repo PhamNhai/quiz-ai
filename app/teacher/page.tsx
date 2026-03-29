@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { GRADES_ALL, SUBJECTS_ALL } from '@/lib/curriculum'
@@ -7,7 +7,7 @@ import { ClassMultiSelect } from '@/components/ClassMultiSelect'
 import { TeacherRowMenu } from '@/components/TeacherRowMenu'
 import s from './manage/manage.module.css'
 
-type ClassRef = { id: number; name: string }
+type ClassRef = { id: number; name: string; student_count?: number; done_count?: number }
 
 type Exam = {
   id: number
@@ -58,6 +58,34 @@ export default function TeacherDashboardPage() {
 
   const [assignExam, setAssignExam] = useState<Exam | null>(null)
   const [assignIds, setAssignIds] = useState<Set<number>>(new Set())
+  const [codeEdit, setCodeEdit] = useState<{ id: number; draft: string } | null>(null)
+
+  const loadDashboard = useCallback(async () => {
+    const [rExams, rCls] = await Promise.all([
+      fetch('/api/exams', { credentials: 'include' }),
+      fetch('/api/classes', { credentials: 'include' }),
+    ])
+    if (rExams.status === 401) {
+      router.replace('/teacher/login?next=/teacher')
+      return
+    }
+    const examData = await rExams.json()
+    const list = Array.isArray(examData) ? examData : []
+    setExams(
+      list.map((e: Record<string, unknown>) => ({
+        ...e,
+        classes: parseExamClasses(e.classes),
+      })) as Exam[]
+    )
+    if (rCls.ok) {
+      const cls = await rCls.json()
+      setAllClasses(
+        Array.isArray(cls)
+          ? cls.map((c: { id: number; name: string }) => ({ id: c.id, name: c.name }))
+          : []
+      )
+    }
+  }, [router])
 
   useEffect(() => {
     ;(async () => {
@@ -73,35 +101,12 @@ export default function TeacherDashboardPage() {
           router.replace('/teacher/classes')
           return
         }
-        const [rExams, rCls] = await Promise.all([
-          fetch('/api/exams', { credentials: 'include' }),
-          fetch('/api/classes', { credentials: 'include' }),
-        ])
-        if (rExams.status === 401) {
-          router.replace('/teacher/login?next=/teacher')
-          return
-        }
-        const examData = await rExams.json()
-        const list = Array.isArray(examData) ? examData : []
-        setExams(
-          list.map((e: Record<string, unknown>) => ({
-            ...e,
-            classes: parseExamClasses(e.classes),
-          })) as Exam[]
-        )
-        if (rCls.ok) {
-          const cls = await rCls.json()
-          setAllClasses(
-            Array.isArray(cls)
-              ? cls.map((c: { id: number; name: string }) => ({ id: c.id, name: c.name }))
-              : []
-          )
-        }
+        await loadDashboard()
       } finally {
         setLoading(false)
       }
     })()
-  }, [router])
+  }, [router, loadDashboard])
 
   async function deleteExam(id: number) {
     if (!confirm('Xóa đề này? Toàn bộ kết quả liên quan sẽ bị xóa.')) return
@@ -171,13 +176,32 @@ export default function TeacherDashboardPage() {
       setTimeout(() => setToast(null), 3200)
       return
     }
-    const nextClasses: ClassRef[] = Array.isArray(data.classes)
-      ? data.classes.map((c: { id: number; name: string }) => ({ id: c.id, name: c.name }))
-      : []
-    setExams(prev => prev.map(x => (x.id === assignExam.id ? { ...x, classes: nextClasses } : x)))
     setAssignExam(null)
     setToast('Đã cập nhật lớp cho đề')
     setTimeout(() => setToast(null), 2800)
+    await loadDashboard()
+  }
+
+  async function saveExamCode() {
+    if (!codeEdit) return
+    const res = await fetch(`/api/exams/${codeEdit.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ examCode: codeEdit.draft }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      setToast(data.error ?? 'Không đổi được mã')
+      setTimeout(() => setToast(null), 3200)
+      return
+    }
+    setExams(prev =>
+      prev.map(x => (x.id === codeEdit.id ? { ...x, exam_code: data.examCode as string } : x))
+    )
+    setCodeEdit(null)
+    setToast('Đã đổi mã đề')
+    setTimeout(() => setToast(null), 2400)
   }
 
   async function logout() {
@@ -228,6 +252,41 @@ export default function TeacherDashboardPage() {
             <div className={s.modalActions}>
               <button type="button" className={s.btnClose} onClick={() => setQrOpen(false)}>
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {codeEdit && (
+        <div
+          className={s.modalBackdrop}
+          role="presentation"
+          onClick={() => setCodeEdit(null)}
+        >
+          <div
+            className={s.modal}
+            role="dialog"
+            aria-label="Đổi mã đề"
+            onClick={ev => ev.stopPropagation()}
+          >
+            <h3>Đổi mã đề</h3>
+            <p className={s.modalHint}>
+              Chỉ chữ không dấu, số, gạch. Không trùng mã khác (không phân biệt hoa thường).
+            </p>
+            <input
+              className={s.search}
+              style={{ width: '100%', marginBottom: 12 }}
+              value={codeEdit.draft}
+              onChange={e => setCodeEdit({ ...codeEdit, draft: e.target.value })}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <div className={s.modalActions}>
+              <button type="button" className={s.btnMini} onClick={() => setCodeEdit(null)}>
+                Hủy
+              </button>
+              <button type="button" className={s.btnClose} onClick={() => void saveExamCode()}>
+                Lưu mã
               </button>
             </div>
           </div>
@@ -354,6 +413,7 @@ export default function TeacherDashboardPage() {
                   <th>Lớp được gán</th>
                   <th>Mức độ</th>
                   <th>Kết quả</th>
+                  <th>Xếp hạng</th>
                   <th>Điểm TB</th>
                   <th>Làm lại</th>
                   <th>Ngày tạo</th>
@@ -361,47 +421,74 @@ export default function TeacherDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(e => (
-                  <tr key={e.id}>
+                {filtered.map(ex => (
+                  <tr key={ex.id}>
                     <td>
-                      <span className={s.code}>{e.exam_code}</span>
+                      <div className={s.codeRow}>
+                        <Link href={`/teacher/exams/${ex.id}/edit`} className={s.codeLink}>
+                          {ex.exam_code}
+                        </Link>
+                        <button
+                          type="button"
+                          className={s.btnEditCode}
+                          title="Đổi mã đề"
+                          aria-label="Đổi mã đề"
+                          onClick={() => setCodeEdit({ id: ex.id, draft: ex.exam_code })}
+                        >
+                          ✎
+                        </button>
+                      </div>
                     </td>
-                    <td className={s.topic}>{e.topic}</td>
+                    <td className={s.topic}>{ex.topic}</td>
                     <td>
-                      {e.subject} · {e.grade}
+                      {ex.subject} · {ex.grade}
                     </td>
                     <td className={s.classCol}>
                       <div className={s.classPills}>
-                        {e.classes.length === 0 ? (
+                        {ex.classes.length === 0 ? (
                           <span className={s.pill}>—</span>
                         ) : (
-                          e.classes.map(c => (
+                          ex.classes.map(c => (
                             <span key={c.id} className={s.pill} title={c.name}>
                               {c.name}
+                              {typeof c.student_count === 'number' ? (
+                                <span className={s.pillFrac}>
+                                  {' '}
+                                  (
+                                  <span className={s.pillDone}>
+                                    {typeof c.done_count === 'number' ? c.done_count : 0}
+                                  </span>
+                                  /{c.student_count})
+                                </span>
+                              ) : null}
                             </span>
                           ))
                         )}
                       </div>
                     </td>
                     <td>
-                      <span className={s.diffBadge}>{diffLabel[e.difficulty] ?? e.difficulty}</span>
+                      <span className={s.diffBadge}>{diffLabel[ex.difficulty] ?? ex.difficulty}</span>
                     </td>
-                    <td>{e.result_count} bài</td>
-                    <td>{e.avg_score != null ? `${e.avg_score}%` : '—'}</td>
-                    <td>{e.allow_retake ? 'Nhiều lần' : '1 lần'}</td>
-                    <td className={s.date}>{new Date(e.created_at).toLocaleDateString('vi-VN')}</td>
+                    <td>{ex.result_count} bài nộp</td>
+                    <td>
+                      <Link href={`/teacher/stats/${ex.id}`} className={s.rankLink}>
+                        Bảng xếp hạng
+                      </Link>
+                    </td>
+                    <td>{ex.avg_score != null ? `${ex.avg_score}%` : '—'}</td>
+                    <td>{ex.allow_retake ? 'Nhiều lần' : '1 lần'}</td>
+                    <td className={s.date}>{new Date(ex.created_at).toLocaleDateString('vi-VN')}</td>
                     <td className={s.tdActions}>
                       <TeacherRowMenu
                         items={[
-                          { label: 'Copy link làm bài', onClick: () => void copyLink(e) },
-                          { label: 'QR làm bài', onClick: () => void openQr(e) },
-                          { label: 'Kết quả / xếp hạng', onClick: () => router.push(`/teacher/stats/${e.id}`) },
+                          { label: 'Copy link làm bài', onClick: () => void copyLink(ex) },
+                          { label: 'QR làm bài', onClick: () => void openQr(ex) },
                           {
                             label: 'Xem & sửa đề',
-                            onClick: () => router.push(`/teacher/exams/${e.id}/edit`),
+                            onClick: () => router.push(`/teacher/exams/${ex.id}/edit`),
                           },
-                          { label: 'Gán lớp', onClick: () => openAssign(e) },
-                          { label: 'Xóa đề', onClick: () => void deleteExam(e.id) },
+                          { label: 'Gán lớp', onClick: () => openAssign(ex) },
+                          { label: 'Xóa đề', onClick: () => void deleteExam(ex.id) },
                         ]}
                       />
                     </td>

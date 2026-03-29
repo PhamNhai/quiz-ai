@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
 import { getExamIfAllowed } from '@/lib/exam-access'
 import { canManageExams, forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
+import { normalizeStudentAnswers } from '@/lib/answers-normalize'
 import { repairLatexAfterJsonParse } from '@/lib/gemini'
 
 export async function GET(req: NextRequest, { params }: { params: { resultId: string } }) {
@@ -49,12 +50,18 @@ export async function GET(req: NextRequest, { params }: { params: { resultId: st
     if (!allowed) return forbidden()
     const questionsRaw = r.content as unknown
     const questions = Array.isArray(questionsRaw) ? questionsRaw : []
-    const answersArr = (Array.isArray(r.answers) ? r.answers : []) as (string | null)[]
+    const answersArr = normalizeStudentAnswers(r.answers, questions.length)
 
     const items = questions.map((q: Record<string, unknown>, i: number) => {
       const studentAns = answersArr[i] ?? null
       const correct = String(q.answer ?? '')
-      const isCorrect = studentAns === correct
+        .trim()
+        .toUpperCase()
+        .slice(0, 1)
+      const isCorrect =
+        studentAns != null &&
+        studentAns !== '' &&
+        correct === String(studentAns).trim().toUpperCase().slice(0, 1)
       const opts = (q.options ?? {}) as Record<string, string>
       return {
         index: i + 1,

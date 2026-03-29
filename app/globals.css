@@ -29,5 +29,23 @@ a { color: inherit; text-decoration: none; }
 button { cursor: pointer; font-family: var(--font-body); }
 input, select, textarea { font-family: var(--font-body); }
 
-.math-inline .katex { font-size: 1.05em; }
-.math-display-wrap { display: block; margin: 0.75em 0; overflow-x: auto; max-width: 100%; }
+.math-inline {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: normal;
+  max-width: 100%;
+}
+/* Không xuống dòng giữa chừng công thức; dài quá thì cuộn ngang ở ô cha */
+.math-inline .katex {
+  font-size: 1.05em;
+  white-space: nowrap;
+}
+.math-display-wrap {
+  display: block;
+  margin: 0.75em 0;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.math-display-wrap .katex {
+  white-space: normal;
+}

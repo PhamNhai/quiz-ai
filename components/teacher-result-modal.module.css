@@ -159,6 +159,13 @@
 }
 .opts li {
   margin: 4px 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 /* Đáp án đúng: xanh; HS chọn sai: đỏ — kèm :global(.katex) vì KaTeX override màu */
 .optCorrect,
@@ -183,10 +190,11 @@
 }
 .sumRow {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 10px;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 8px;
   margin-bottom: 8px;
+  min-width: 0;
 }
 .sumRow:last-child {
   margin-bottom: 0;
@@ -199,6 +207,8 @@
 .sumBody {
   flex: 1;
   min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .exp {
   font-size: 12px;

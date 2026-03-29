@@ -23,6 +23,14 @@
   color: var(--accent);
   text-decoration: underline;
 }
+.editExamLink {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.editExamLink:hover {
+  text-decoration: underline;
+}
 .head {
   margin-bottom: 1.25rem;
 }
@@ -33,6 +41,20 @@
   background: var(--surface2);
   padding: 2px 8px;
   border-radius: 4px;
+}
+.codeLink {
+  display: inline-block;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--surface2);
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.codeLink:hover {
+  text-decoration: underline;
 }
 .h1 {
   font-family: var(--font-display);

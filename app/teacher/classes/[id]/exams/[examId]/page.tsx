@@ -14,6 +14,7 @@ type Row = {
   total_questions: number | null
   percentage: number | null
   submitted_at: string | null
+  attempt_count: number
 }
 
 type Exam = { id: number; exam_code: string; topic: string; subject: string; grade: string }
@@ -84,11 +85,16 @@ export default function ClassExamBoardPage() {
           ← {className || 'Lớp'}
         </Link>
         <Link href={`/teacher/stats/${exam.id}`} className={s.statsLink}>
-          Xem bảng xếp hạng đề
+          Bảng xếp hạng
+        </Link>
+        <Link href={`/teacher/exams/${exam.id}/edit`} className={s.editExamLink}>
+          Sửa đề
         </Link>
       </nav>
       <div className={s.head}>
-        <span className={s.code}>{exam.exam_code}</span>
+        <Link href={`/teacher/exams/${exam.id}/edit`} className={s.codeLink}>
+          {exam.exam_code}
+        </Link>
         <h1 className={s.h1}>{exam.topic}</h1>
         <p className={s.meta}>
           {exam.subject} · Khối {exam.grade} ·{' '}
@@ -104,6 +110,7 @@ export default function ClassExamBoardPage() {
               <th>Trạng thái</th>
               <th>Điểm</th>
               <th>Tỉ lệ</th>
+              <th>Lần làm</th>
               <th />
             </tr>
           </thead>
@@ -128,6 +135,7 @@ export default function ClassExamBoardPage() {
                     : '—'}
                 </td>
                 <td>{r.percentage != null ? `${r.percentage}%` : '—'}</td>
+                <td>{r.attempt_count > 0 ? `${r.attempt_count} lần` : '—'}</td>
                 <td className={s.tdAct}>
                   {r.result_id != null && exam && (
                     <TeacherRowMenu

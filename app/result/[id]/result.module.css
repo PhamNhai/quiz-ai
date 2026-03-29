@@ -39,7 +39,20 @@
 .badgeWrong   { background: var(--danger-light);  color: var(--danger); }
 .detailQ { font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 12px; }
 .detailOptions { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-.detailOpt { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); padding: 6px 10px; border-radius: 6px; background: var(--surface2); flex-wrap: wrap; }
+.detailOpt {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--surface2);
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .optCorrect { background: var(--success-light); color: #0f4d35; font-weight: 500; }
 .optWrong   { background: var(--danger-light);  color: var(--danger); text-decoration: line-through; }
 .optK { font-weight: 500; min-width: 16px; }
