@@ -14,11 +14,16 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     const questions = (exam.content as any[]).map((q, i) => ({
       index: i, question: q.question, options: q.options
     }))
+    const durationMin =
+      exam.duration_minutes != null && Number(exam.duration_minutes) > 0
+        ? Number(exam.duration_minutes)
+        : null
     return NextResponse.json({
       id: exam.id, examCode: exam.exam_code, topic: exam.topic,
       subject: exam.subject, grade: exam.grade, difficulty: exam.difficulty,
       allowRetake: exam.allow_retake, questions, createdAt: exam.created_at,
       restrictedToClasses,
+      durationMinutes: durationMin,
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

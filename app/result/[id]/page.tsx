@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { MathText } from '@/components/MathText'
 import s from './result.module.css'
 
 type DetailedResult = {
@@ -73,14 +74,15 @@ export default function ResultPage() {
                     {r.isCorrect ? '✓ Đúng' : '✗ Sai'}
                   </span>
                 </div>
-                <p className={s.detailQ}>{r.question}</p>
+                <MathText text={r.question} as="p" className={s.detailQ} />
                 <div className={s.detailOptions}>
                   {Object.entries(r.options).map(([k, v]) => (
                     <div key={k} className={`${s.detailOpt}
                       ${k === r.correct ? s.optCorrect : ''}
                       ${k === r.studentAnswer && !r.isCorrect ? s.optWrong : ''}
                     `}>
-                      <span className={s.optK}>{k}</span> {v}
+                      <span className={s.optK}>{k}</span>{' '}
+                      <MathText text={v} as="span" />
                       {k === r.correct && <span className={s.optTag}>✓ Đáp án đúng</span>}
                       {k === r.studentAnswer && !r.isCorrect && <span className={s.optTagWrong}>Bạn chọn</span>}
                     </div>
@@ -88,7 +90,8 @@ export default function ResultPage() {
                 </div>
                 {r.explanation && (
                   <div className={s.explanation}>
-                    <span className={s.expIcon}>💡</span> {r.explanation}
+                    <span className={s.expIcon}>💡</span>{' '}
+                    <MathText text={r.explanation} as="span" />
                   </div>
                 )}
               </div>

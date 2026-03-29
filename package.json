@@ -12,7 +12,8 @@
     "react": "^18",
     "react-dom": "^18",
     "@neondatabase/serverless": "^0.9.4",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "katex": "^0.16.11"
   },
   "devDependencies": {
     "@types/node": "^20",

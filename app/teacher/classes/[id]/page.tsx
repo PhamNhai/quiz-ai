@@ -165,19 +165,19 @@ export default function ClassDetailPage() {
 
       <section className={d.section}>
         <h2 className={d.h2}>Nhập CSV</h2>
-        <p className={d.hint}>Dòng đầu: name,password,note — mỗi dòng một học sinh.</p>
+        <p className={d.hint}>Dòng đầu: name,password,note - mỗi dòng một học sinh.</p>
         <textarea
           className={d.textarea}
           rows={5}
           value={csvText}
           onChange={e => setCsvText(e.target.value)}
-          placeholder={'name,password,note\n"Nguyễn Văn A",pass123,','}
+          placeholder={`name,password,note\n"Nguyễn Văn A",pass123,`}
         />
         <button type="button" onClick={importCsv} className={d.btnSec}>
           Nhập từ CSV
         </button>
         <a href={`/api/classes/${id}/export`} className={d.link} target="_blank" rel="noreferrer">
-          Xuất CSV (mật khẩu để trống — cần đặt lại khi nhập lại)
+          Xuất CSV (mật khẩu để trống - cần đặt lại khi nhập lại)
         </a>
       </section>
 

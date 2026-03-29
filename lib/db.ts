@@ -13,6 +13,8 @@ export type ExamRow = {
   allow_retake: boolean
   content: unknown
   created_at: Date | string
+  /** Phút làm bài; null = không giới hạn */
+  duration_minutes?: number | null
 }
 
 let sqlInstance: Sql | null = null
@@ -47,6 +49,7 @@ export async function initDB() {
   await sql`ALTER TABLE exams ADD COLUMN IF NOT EXISTS exam_code TEXT`
   await sql`ALTER TABLE exams ADD COLUMN IF NOT EXISTS allow_retake BOOLEAN DEFAULT TRUE`
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS exams_exam_code_key ON exams (exam_code)`
+  await sql`ALTER TABLE exams ADD COLUMN IF NOT EXISTS duration_minutes INTEGER`
   await sql`
     CREATE TABLE IF NOT EXISTS results (
       id              SERIAL PRIMARY KEY,

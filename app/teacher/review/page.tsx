@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { MathText } from '@/components/MathText'
 import s from './review.module.css'
 
 type Question = { question: string; options: Record<string,string>; answer: string; explanation: string }
@@ -78,13 +79,15 @@ export default function ReviewPage() {
                   <button key={k} onClick={() => setAnswer(i, k)}
                     className={`${s.opt} ${q.answer===k ? s.optCorrect : ''}`}>
                     <span className={s.optKey}>{k}</span>
-                    <span className={s.optVal}>{v}</span>
+                    <MathText text={v} as="span" className={s.optVal} />
                     {q.answer===k && <span className={s.optTag}>✓ Đáp án đúng</span>}
                   </button>
                 ))}
               </div>
               {q.explanation && (
-                <div className={s.explanation}>💡 {q.explanation}</div>
+                <div className={s.explanation}>
+                  💡 <MathText text={q.explanation} as="span" />
+                </div>
               )}
             </div>
           ))}

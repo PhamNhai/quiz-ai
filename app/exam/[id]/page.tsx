@@ -1,6 +1,7 @@
 'use client'
-import { useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { MathText } from '@/components/MathText'
 import s from './exam.module.css'
 
 type Question = { index: number; question: string; options: Record<string, string> }
@@ -12,6 +13,7 @@ type ExamData = {
   grade: string
   questions: Question[]
   restrictedToClasses?: boolean
+  durationMinutes?: number | null
 }
 
 function shuffle<T>(arr: T[], seed: number): T[] {
@@ -25,6 +27,12 @@ function shuffle<T>(arr: T[], seed: number): T[] {
   return a
 }
 
+function fmtMmSs(sec: number): string {
+  const m = Math.floor(sec / 60)
+  const sec2 = sec % 60
+  return `${m}:${sec2.toString().padStart(2, '0')}`
+}
+
 export default function ExamPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -35,8 +43,28 @@ export default function ExamPage() {
   const [error, setError] = useState('')
   const [studentName, setStudentName] = useState('')
   const [studentId, setStudentId] = useState<number | null>(null)
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
+  const [expired, setExpired] = useState(false)
+
+  const answersRef = useRef<Record<number, string>>({})
+  const startedAtMsRef = useRef<number | null>(null)
+  const submittingRef = useRef(false)
+  const examRef = useRef<ExamData | null>(null)
+  const shuffledRef = useRef<Question[]>([])
 
   const seed = useMemo(() => Math.floor(Math.random() * 999999), [])
+
+  useEffect(() => {
+    submittingRef.current = submitting
+  }, [submitting])
+
+  useEffect(() => {
+    answersRef.current = answers
+  }, [answers])
+
+  useEffect(() => {
+    examRef.current = exam
+  }, [exam])
 
   useEffect(() => {
     const raw = typeof window !== 'undefined' ? sessionStorage.getItem(`exam_auth_${id}`) : null
@@ -73,31 +101,104 @@ export default function ExamPage() {
     [exam, seed]
   )
 
-  async function submit() {
-    if (!exam || submitting) return
-    const unanswered = shuffledQuestions.filter(q => answers[q.index] === undefined)
-    if (unanswered.length > 0 && !confirm(`Còn ${unanswered.length} câu chưa trả lời. Nộp bài?`)) return
-    setSubmitting(true)
-    try {
-      const res = await fetch('/api/submit-result', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+  useEffect(() => {
+    shuffledRef.current = shuffledQuestions
+  }, [shuffledQuestions])
+
+  const runSubmit = useCallback(
+    async (fromTimeout: boolean) => {
+      const ex = examRef.current
+      if (!ex) return
+      if (submittingRef.current) return
+      submittingRef.current = true
+      if (!fromTimeout) {
+        const unanswered = shuffledRef.current.filter(q => answersRef.current[q.index] === undefined)
+        if (unanswered.length > 0 && !confirm(`Còn ${unanswered.length} câu chưa trả lời. Nộp bài?`)) {
+          submittingRef.current = false
+          return
+        }
+      }
+      setSubmitting(true)
+      setError('')
+      try {
+        const body: Record<string, unknown> = {
           examId: id,
           studentName,
           studentId: studentId ?? undefined,
-          answers,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      sessionStorage.setItem(`result_${data.resultId}`, JSON.stringify(data))
-      router.push(`/result/${data.resultId}`)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Lỗi')
-      setSubmitting(false)
+          answers: answersRef.current,
+        }
+        if (ex.durationMinutes && ex.durationMinutes > 0 && startedAtMsRef.current != null) {
+          body.startedAtMs = startedAtMsRef.current
+        }
+        const res = await fetch('/api/submit-result', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
+        sessionStorage.setItem(`result_${data.resultId}`, JSON.stringify(data))
+        router.push(`/result/${data.resultId}`)
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Lỗi')
+        submittingRef.current = false
+        setSubmitting(false)
+      }
+    },
+    [id, router, studentId, studentName]
+  )
+
+  const runSubmitRef = useRef(runSubmit)
+  runSubmitRef.current = runSubmit
+
+  useEffect(() => {
+    const ex = exam
+    if (!ex?.durationMinutes || ex.durationMinutes <= 0) {
+      setSecondsLeft(null)
+      return
     }
-  }
+    const totalSec = ex.durationMinutes * 60
+    const key = `exam_timer_${ex.id}`
+    let start = Date.now()
+    const prev = sessionStorage.getItem(key)
+    if (prev) {
+      try {
+        const p = JSON.parse(prev) as { start?: number }
+        if (typeof p.start === 'number') start = p.start
+      } catch {
+        /* empty */
+      }
+    } else {
+      sessionStorage.setItem(key, JSON.stringify({ start }))
+    }
+    startedAtMsRef.current = start
+
+    let ended = false
+    const iv = setInterval(() => {
+      if (ended) return
+      const elapsed = Math.floor((Date.now() - start) / 1000)
+      const left = Math.max(0, totalSec - elapsed)
+      setSecondsLeft(left)
+      if (left <= 0 && !ended) {
+        ended = true
+        clearInterval(iv)
+        setExpired(true)
+        void runSubmitRef.current(true)
+      }
+    }, 1000)
+
+    const elapsed0 = Math.floor((Date.now() - start) / 1000)
+    const left0 = Math.max(0, totalSec - elapsed0)
+    setSecondsLeft(left0)
+    if (left0 <= 0) {
+      ended = true
+      clearInterval(iv)
+      setExpired(true)
+      void runSubmitRef.current(true)
+    }
+
+    return () => clearInterval(iv)
+  }, [exam?.id, exam?.durationMinutes])
 
   if (loading) {
     return (
@@ -120,6 +221,8 @@ export default function ExamPage() {
 
   const answered = Object.keys(answers).length
   const total = exam.questions.length
+  const locked = expired || submitting
+  const danger = secondsLeft != null && secondsLeft <= 60 && secondsLeft > 0
 
   return (
     <div className={s.page}>
@@ -131,12 +234,19 @@ export default function ExamPage() {
             </div>
             <h1 className={s.examTitle}>{exam.topic}</h1>
           </div>
-          <div className={s.progress}>
-            <div className={s.progressText}>
-              {answered}/{total}
-            </div>
-            <div className={s.progressBar}>
-              <div className={s.progressFill} style={{ width: `${(answered / total) * 100}%` }} />
+          <div className={s.headerRight}>
+            {secondsLeft != null && (
+              <div className={`${s.timer} ${danger ? s.timerDanger : ''}`}>
+                ⏱ {fmtMmSs(secondsLeft)}
+              </div>
+            )}
+            <div className={s.progress}>
+              <div className={s.progressText}>
+                {answered}/{total}
+              </div>
+              <div className={s.progressBar}>
+                <div className={s.progressFill} style={{ width: `${(answered / total) * 100}%` }} />
+              </div>
             </div>
           </div>
         </div>
@@ -145,20 +255,30 @@ export default function ExamPage() {
       <div className={s.container}>
         <div className={s.studentBadge}>👤 {studentName}</div>
 
+        {expired && (
+          <div className={s.expiredBanner}>
+            Hết giờ làm bài. Câu chưa chọn không được tính điểm. Đang nộp bài…
+          </div>
+        )}
+
         {shuffledQuestions.map((q, qi) => (
-          <div key={q.index} className={s.questionCard}>
+          <div key={q.index} className={`${s.questionCard} ${locked ? s.questionDisabled : ''}`}>
             <div className={s.qNum}>Câu {qi + 1}</div>
-            <p className={s.qText}>{q.question}</p>
+            <MathText text={q.question} as="p" className={s.qText} />
             <div className={s.options}>
               {Object.entries(q.options).map(([k, v]) => (
                 <button
                   key={k}
                   type="button"
-                  onClick={() => setAnswers(prev => ({ ...prev, [q.index]: k }))}
+                  disabled={locked}
+                  onClick={() => {
+                    if (locked) return
+                    setAnswers(prev => ({ ...prev, [q.index]: k }))
+                  }}
                   className={`${s.option} ${answers[q.index] === k ? s.optionSelected : ''}`}
                 >
                   <span className={s.optionKey}>{k}</span>
-                  <span className={s.optionVal}>{v}</span>
+                  <MathText text={v} as="span" className={s.optionVal} />
                 </button>
               ))}
             </div>
@@ -166,7 +286,12 @@ export default function ExamPage() {
         ))}
 
         {error && <div className={s.error}>{error}</div>}
-        <button type="button" onClick={submit} disabled={submitting} className={s.btnSubmit}>
+        <button
+          type="button"
+          onClick={() => runSubmit(false)}
+          disabled={locked}
+          className={s.btnSubmit}
+        >
           {submitting ? (
             <>
               <span className={s.spin} /> Đang chấm bài...

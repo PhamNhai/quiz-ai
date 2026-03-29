@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callGemini, buildCommentPrompt } from '@/lib/gemini'
-import sql, { type ExamRow } from '@/lib/db'
+import sql, { initDB, type ExamRow } from '@/lib/db'
+
+const GRACE_MS = 120_000 // 2 phút dư cho độ trễ mạng
 
 export async function POST(req: NextRequest) {
   try {
-    const { examId, studentName, studentId, answers } = await req.json()
+    await initDB()
+    const { examId, studentName, studentId, answers, startedAtMs } = await req.json()
     if (!examId || !studentName || !answers)
       return NextResponse.json({ error: 'Thiếu thông tin' }, { status: 400 })
 
@@ -12,6 +15,18 @@ export async function POST(req: NextRequest) {
     if (!rows.length) return NextResponse.json({ error: 'Đề thi không tồn tại' }, { status: 404 })
 
     const exam = rows[0]
+
+    const dur = exam.duration_minutes != null ? Number(exam.duration_minutes) : null
+    if (dur != null && dur > 0) {
+      const started = Number(startedAtMs)
+      if (!started || Number.isNaN(started))
+        return NextResponse.json({ error: 'Thiếu thông tin thời gian làm bài' }, { status: 400 })
+      if (started > Date.now() + 60_000)
+        return NextResponse.json({ error: 'Thời gian bắt đầu không hợp lệ' }, { status: 400 })
+      const elapsed = Date.now() - started
+      if (elapsed > dur * 60 * 1000 + GRACE_MS)
+        return NextResponse.json({ error: 'Đã hết giờ làm bài' }, { status: 403 })
+    }
 
     const classLinks = (await sql`
       SELECT class_id FROM exam_classes WHERE exam_id = ${examId}
