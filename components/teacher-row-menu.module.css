@@ -17,19 +17,18 @@
   border-color: var(--accent);
   color: var(--accent);
 }
-.list {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  min-width: 200px;
+/* Portal vào document.body — không bị cắt bởi overflow bảng */
+.listPortal {
+  position: fixed;
+  z-index: 10050;
+  min-width: 220px;
   margin: 0;
   padding: 6px 0;
   list-style: none;
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
 }
 .item {
   display: block;

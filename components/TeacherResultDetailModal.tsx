@@ -225,18 +225,19 @@ export function TeacherResultDetailModal(props: {
                     <MathText text={q.question} as="div" />
                   </div>
                   <ul className={s.opts}>
-                    {Object.entries(q.options).map(([k, v]) => (
-                      <li key={k}>
-                        <strong>{k}.</strong>{' '}
-                        <MathText text={v} as="span" />{' '}
-                        {k === q.correct ? (
-                          <span className={s.ok}>(đáp án đúng)</span>
-                        ) : null}{' '}
-                        {q.studentAnswer === k ? (
-                          <span className={q.isCorrect ? s.ok : s.bad}>(HS chọn)</span>
-                        ) : null}
-                      </li>
-                    ))}
+                    {Object.entries(q.options).map(([k, v]) => {
+                      const isAns = k === q.correct
+                      const isPick = q.studentAnswer === k
+                      const optClass = isAns ? s.optCorrect : isPick ? s.optStudent : ''
+                      return (
+                        <li key={k}>
+                          <strong>{k}.</strong>{' '}
+                          <span className={optClass}>
+                            <MathText text={v} as="span" />
+                          </span>
+                        </li>
+                      )
+                    })}
                   </ul>
                   {q.explanation ? (
                     <div className={s.exp}>

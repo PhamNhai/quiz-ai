@@ -160,6 +160,15 @@
 .opts li {
   margin: 4px 0;
 }
+/* Đáp án đúng: xanh lá; đáp án HS chọn (khi sai): đỏ; trùng đúng → xanh */
+.optCorrect {
+  color: #16a34a;
+  font-weight: 500;
+}
+.optStudent {
+  color: #dc2626;
+  font-weight: 500;
+}
 .exp {
   font-size: 12px;
   color: var(--text-3);

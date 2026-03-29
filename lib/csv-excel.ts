@@ -1,4 +1,4 @@
-/** CSV mở ổn trong Excel (VN): UTF-8 BOM, `sep=;`, phân cách `;`, xuống dòng CRLF. */
+/** CSV: UTF-8 BOM, phân cách `;`, CRLF (Excel VN nhận `;` khi mở file). */
 const SEP = ';'
 
 function escCell(v: string | number): string {
@@ -10,7 +10,7 @@ function escCell(v: string | number): string {
 export function toExcelCsv(header: string[], rows: (string | number)[][]): string {
   const line = (cols: (string | number)[]) => cols.map(escCell).join(SEP)
   const body = [line(header), ...rows.map(line)].join('\r\n')
-  return `\uFEFFsep=${SEP}\r\n${body}`
+  return `\uFEFF${body}`
 }
 
 /** Một dòng CSV có thể có ô trong ngoặc kép (dùng khi nhập lại từ Excel). */
