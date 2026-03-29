@@ -1,0 +1,33 @@
+.page{min-height:100vh;background:var(--bg)}
+.nav{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.back{font-size:14px;color:var(--text-2)}.back:hover{color:var(--text)}
+.navTitle{font-size:14px;font-weight:500}
+.container{max-width:900px;margin:0 auto;padding:2rem 1.25rem}
+.statCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:2rem}
+.statCard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;text-align:center}
+.statNum{font-family:var(--font-display);font-size:2rem;font-weight:400;color:var(--text);line-height:1}
+.statLabel{font-size:12px;color:var(--text-3);margin-top:6px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.tableTitle{font-size:16px;font-weight:500;color:var(--text)}
+.btnExport{padding:8px 18px;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;transition:all .12s}
+.btnExport:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.center{display:flex;justify-content:center;padding:3rem}
+.spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{padding:2.5rem;text-align:center;font-size:15px;color:var(--text-2)}
+.tableWrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border)}
+.table{width:100%;border-collapse:collapse;background:var(--surface);font-size:14px}
+.table th{padding:10px 14px;text-align:left;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-3);border-bottom:1px solid var(--border)}
+.table td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:middle}
+.table tr:last-child td{border-bottom:none}
+.rank1 td{background:#fffbe6}
+.rank2 td{background:#f5f5f5}
+.rank3 td{background:#fff5ef}
+.rankCell{font-size:18px;text-align:center;width:60px}
+.nameCell{font-weight:500;color:var(--text)}
+.scoreCell{font-weight:600;color:var(--text);font-size:15px}
+.pctWrap{display:flex;align-items:center;gap:10px}
+.pctBar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;min-width:80px}
+.pctFill{height:100%;border-radius:3px;transition:width .3s}
+.pctNum{font-size:13px;font-weight:500;color:var(--text);min-width:36px;text-align:right}
+.dateCell{font-size:12px;color:var(--text-3);white-space:nowrap}

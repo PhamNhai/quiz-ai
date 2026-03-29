@@ -5,10 +5,12 @@ type Sql = ReturnType<typeof neon>
 /** Hàng từ bảng exams — ép kiểu kết quả sql`...` (Neon union quá rộng). */
 export type ExamRow = {
   id: number
+  exam_code: string
   topic: string
   subject: string
   grade: string
   difficulty: string
+  allow_retake: boolean
   content: unknown
   created_at: Date | string
 }
@@ -31,15 +33,20 @@ const sql = ((strings: TemplateStringsArray, ...values: unknown[]) =>
 export async function initDB() {
   await sql`
     CREATE TABLE IF NOT EXISTS exams (
-      id        SERIAL PRIMARY KEY,
-      topic     TEXT NOT NULL,
-      subject   TEXT NOT NULL,
-      grade     TEXT NOT NULL,
-      difficulty TEXT NOT NULL,
-      content   JSONB NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      id           SERIAL PRIMARY KEY,
+      exam_code    TEXT,
+      topic        TEXT NOT NULL,
+      subject      TEXT NOT NULL,
+      grade        TEXT NOT NULL,
+      difficulty   TEXT NOT NULL,
+      allow_retake BOOLEAN DEFAULT TRUE,
+      content      JSONB NOT NULL,
+      created_at   TIMESTAMPTZ DEFAULT NOW()
     )
   `
+  await sql`ALTER TABLE exams ADD COLUMN IF NOT EXISTS exam_code TEXT`
+  await sql`ALTER TABLE exams ADD COLUMN IF NOT EXISTS allow_retake BOOLEAN DEFAULT TRUE`
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS exams_exam_code_key ON exams (exam_code)`
   await sql`
     CREATE TABLE IF NOT EXISTS results (
       id              SERIAL PRIMARY KEY,
@@ -52,6 +59,20 @@ export async function initDB() {
       submitted_at    TIMESTAMPTZ DEFAULT NOW()
     )
   `
+}
+
+/** Mã đề duy nhất: nếu trùng thì thêm hậu tố -2, -3, ... */
+export async function generateUniqueCode(base: string): Promise<string> {
+  const clean =
+    base.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 48) || `DE${Date.now().toString(36).toUpperCase()}`
+  let candidate = clean.toUpperCase()
+  let n = 0
+  while (true) {
+    const rows = (await sql`SELECT id FROM exams WHERE exam_code = ${candidate}`) as { id: number }[]
+    if (!rows.length) return candidate
+    n += 1
+    candidate = `${clean.toUpperCase()}-${n}`
+  }
 }
 
 export default sql

@@ -12,8 +12,15 @@ export async function POST(req: NextRequest) {
     if (!rows.length) return NextResponse.json({ error: 'Đề thi không tồn tại' }, { status: 404 })
 
     const exam = rows[0]
-    const questions = exam.content as any[]
 
+    // Check allow_retake
+    if (!exam.allow_retake) {
+      const prev = (await sql`SELECT id FROM results WHERE exam_id = ${examId} AND student_name = ${studentName}`) as { id: number }[]
+      if (prev.length > 0)
+        return NextResponse.json({ error: 'Đề thi này chỉ được làm một lần.' }, { status: 403 })
+    }
+
+    const questions = exam.content as any[]
     let score = 0
     const wrongQuestions: string[] = []
     const detailedResults = questions.map((q, i) => {
@@ -21,16 +28,11 @@ export async function POST(req: NextRequest) {
       const isCorrect  = studentAns === q.answer
       if (isCorrect) score++
       else wrongQuestions.push(q.question.slice(0, 50))
-      return {
-        question: q.question, options: q.options,
-        correct: q.answer, studentAnswer: studentAns,
-        isCorrect, explanation: q.explanation
-      }
+      return { question: q.question, options: q.options, correct: q.answer, studentAnswer: studentAns, isCorrect, explanation: q.explanation }
     })
 
     const aiComment = await callGemini(buildCommentPrompt({
-      subject: exam.subject, score, total: questions.length,
-      studentName, wrongQuestions
+      subject: exam.subject, score, total: questions.length, studentName, wrongQuestions
     }))
 
     const saved = (await sql`

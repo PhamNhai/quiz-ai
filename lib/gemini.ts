@@ -28,6 +28,20 @@ export async function callGemini(prompt: string, system?: string): Promise<strin
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 }
 
+/** Trích mảng JSON từ phản hồi AI (có thể bọc ```json ... ``` hoặc có text thừa). */
+export function extractJSON(raw: string): unknown[] {
+  let s = raw.trim()
+  const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (fence) s = fence[1].trim()
+  const start = s.indexOf('[')
+  const end = s.lastIndexOf(']')
+  if (start === -1 || end === -1 || end <= start) throw new Error('Không tìm thấy mảng JSON')
+  s = s.slice(start, end + 1)
+  const parsed = JSON.parse(s) as unknown
+  if (!Array.isArray(parsed)) throw new Error('JSON không phải mảng')
+  return parsed
+}
+
 export function buildExamPrompt(p: {
   subject: string; grade: string; topic: string
   subtopic: string; count: number; difficulty: string; extra: string

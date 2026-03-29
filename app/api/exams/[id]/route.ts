@@ -13,9 +13,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       index: i, question: q.question, options: q.options
     }))
     return NextResponse.json({
-      id: exam.id, topic: exam.topic, subject: exam.subject,
-      grade: exam.grade, difficulty: exam.difficulty,
-      questions, createdAt: exam.created_at
+      id: exam.id, examCode: exam.exam_code, topic: exam.topic,
+      subject: exam.subject, grade: exam.grade, difficulty: exam.difficulty,
+      allowRetake: exam.allow_retake, questions, createdAt: exam.created_at
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

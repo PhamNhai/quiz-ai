@@ -1,0 +1,26 @@
+import { NextRequest, NextResponse } from 'next/server'
+import sql from '@/lib/db'
+
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const rows = (await sql`
+      SELECT id, student_name, score, total_questions,
+        ROUND((score / total_questions * 100))::int AS percentage,
+        ai_comment, submitted_at
+      FROM results
+      WHERE exam_id = ${params.id}
+      ORDER BY percentage DESC, submitted_at ASC
+    `) as Array<{
+      id: number
+      student_name: string
+      score: number
+      total_questions: number
+      percentage: number
+      ai_comment: string | null
+      submitted_at: Date | string
+    }>
+    return NextResponse.json(rows)
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

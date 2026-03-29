@@ -1,22 +1,36 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import s from './exam.module.css'
 
-type Question = { index: number; question: string; options: Record<string,string> }
-type ExamData  = { id: number; topic: string; subject: string; grade: string; questions: Question[] }
+type Question = { index:number; question:string; options:Record<string,string> }
+type ExamData  = { id:number; examCode:string; topic:string; subject:string; grade:string; questions:Question[] }
+
+function shuffle<T>(arr: T[], seed: number): T[] {
+  const a = [...arr]
+  let s2 = seed
+  for (let i = a.length - 1; i > 0; i--) {
+    s2 = (s2 * 1664525 + 1013904223) & 0xffffffff
+    const j = Math.abs(s2) % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 export default function ExamPage() {
-  const { id }       = useParams<{ id: string }>()
+  const { id }       = useParams<{ id:string }>()
   const searchParams = useSearchParams()
   const router       = useRouter()
   const studentName  = searchParams.get('name') || ''
 
-  const [exam,      setExam]      = useState<ExamData | null>(null)
-  const [answers,   setAnswers]   = useState<Record<number, string>>({})
-  const [loading,   setLoading]   = useState(true)
-  const [submitting,setSubmitting]= useState(false)
-  const [error,     setError]     = useState('')
+  const [exam,       setExam]       = useState<ExamData|null>(null)
+  const [answers,    setAnswers]    = useState<Record<number,string>>({})
+  const [loading,    setLoading]    = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error,      setError]      = useState('')
+
+  // Seed ngẫu nhiên mỗi session → xáo câu hỏi
+  const seed = useMemo(() => Math.floor(Math.random() * 999999), [])
 
   useEffect(() => {
     if (!studentName) { router.replace('/exam'); return }
@@ -27,29 +41,30 @@ export default function ExamPage() {
       .finally(() => setLoading(false))
   }, [id, studentName, router])
 
+  const shuffledQuestions = useMemo(
+    () => exam ? shuffle(exam.questions, seed) : [],
+    [exam, seed]
+  )
+
   async function submit() {
     if (!exam || submitting) return
-    const unanswered = exam.questions.filter(q => answers[q.index] === undefined)
-    if (unanswered.length > 0) {
-      if (!confirm(`Còn ${unanswered.length} câu chưa trả lời. Nộp bài?`)) return
-    }
+    const unanswered = shuffledQuestions.filter(q => answers[q.index] === undefined)
+    if (unanswered.length > 0 && !confirm(`Còn ${unanswered.length} câu chưa trả lời. Nộp bài?`)) return
     setSubmitting(true)
     try {
       const res  = await fetch('/api/submit-result', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ examId: id, studentName, answers })
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ examId:id, studentName, answers })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      // Lưu kết quả vào sessionStorage rồi chuyển trang
       sessionStorage.setItem(`result_${data.resultId}`, JSON.stringify(data))
       router.push(`/result/${data.resultId}`)
     } catch (e: any) { setError(e.message); setSubmitting(false) }
   }
 
   if (loading) return <div className={s.center}><div className={s.spinner}/></div>
-  if (error)   return <div className={s.center}><p className={s.err}>{error}</p></div>
+  if (error)   return <div className={s.center}><p className={s.err}>{error}</p><a href="/exam" className={s.errLink}>← Quay lại</a></div>
   if (!exam)   return null
 
   const answered = Object.keys(answers).length
@@ -60,13 +75,13 @@ export default function ExamPage() {
       <header className={s.header}>
         <div className={s.headerInner}>
           <div>
-            <div className={s.examMeta}>{exam.subject} · {exam.grade}</div>
+            <div className={s.examMeta}>{exam.subject} · {exam.grade} · Mã đề: {exam.examCode}</div>
             <h1 className={s.examTitle}>{exam.topic}</h1>
           </div>
           <div className={s.progress}>
             <div className={s.progressText}>{answered}/{total}</div>
             <div className={s.progressBar}>
-              <div className={s.progressFill} style={{ width: `${(answered/total)*100}%` }}/>
+              <div className={s.progressFill} style={{width:`${(answered/total)*100}%`}}/>
             </div>
           </div>
         </div>
@@ -75,15 +90,15 @@ export default function ExamPage() {
       <div className={s.container}>
         <div className={s.studentBadge}>👤 {studentName}</div>
 
-        {exam.questions.map((q, qi) => (
+        {shuffledQuestions.map((q, qi) => (
           <div key={q.index} className={s.questionCard}>
-            <div className={s.qNum}>Câu {qi + 1}</div>
+            <div className={s.qNum}>Câu {qi+1}</div>
             <p className={s.qText}>{q.question}</p>
             <div className={s.options}>
-              {Object.entries(q.options).map(([k, v]) => (
+              {Object.entries(q.options).map(([k,v]) => (
                 <button key={k}
-                  onClick={() => setAnswers(prev => ({ ...prev, [q.index]: k }))}
-                  className={`${s.option} ${answers[q.index] === k ? s.optionSelected : ''}`}>
+                  onClick={() => setAnswers(prev => ({...prev,[q.index]:k}))}
+                  className={`${s.option} ${answers[q.index]===k ? s.optionSelected : ''}`}>
                   <span className={s.optionKey}>{k}</span>
                   <span className={s.optionVal}>{v}</span>
                 </button>
@@ -93,11 +108,8 @@ export default function ExamPage() {
         ))}
 
         {error && <div className={s.error}>{error}</div>}
-
         <button onClick={submit} disabled={submitting} className={s.btnSubmit}>
-          {submitting
-            ? <><span className={s.spin}/> Đang chấm bài...</>
-            : `Nộp bài (${answered}/${total} câu)`}
+          {submitting ? <><span className={s.spin}/> Đang chấm bài...</> : `Nộp bài (${answered}/${total} câu)`}
         </button>
       </div>
     </div>

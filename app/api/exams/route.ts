@@ -1,0 +1,41 @@
+import { NextRequest, NextResponse } from 'next/server'
+import sql, { initDB } from '@/lib/db'
+
+export async function GET() {
+  try {
+    await initDB()
+    const rows = (await sql`
+      SELECT e.id, e.exam_code, e.topic, e.subject, e.grade, e.difficulty, e.allow_retake, e.created_at,
+        COUNT(r.id)::int AS result_count,
+        ROUND(AVG(r.score / r.total_questions * 100))::int AS avg_score
+      FROM exams e
+      LEFT JOIN results r ON r.exam_id = e.id
+      GROUP BY e.id
+      ORDER BY e.created_at DESC
+    `) as Array<{
+      id: number
+      exam_code: string
+      topic: string
+      subject: string
+      grade: string
+      difficulty: string
+      allow_retake: boolean
+      created_at: Date | string
+      result_count: number
+      avg_score: number | null
+    }>
+    return NextResponse.json(rows)
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { id } = await req.json()
+    await sql`DELETE FROM exams WHERE id = ${id}`
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
