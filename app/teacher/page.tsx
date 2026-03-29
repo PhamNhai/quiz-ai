@@ -226,13 +226,6 @@ export default function TeacherDashboardPage() {
     })
   }, [exams, search, subjectFilter, gradeFilter])
 
-  const diffLabel: Record<string, string> = {
-    easy: 'Dễ',
-    medium: 'TB',
-    hard: 'Khó',
-    mixed: 'Hỗn hợp',
-  }
-
   return (
     <div className={s.page}>
       {toast && <div className={s.toast}>{toast}</div>}
@@ -411,9 +404,8 @@ export default function TeacherDashboardPage() {
                   <th>Chủ đề</th>
                   <th>Môn / Lớp</th>
                   <th>Lớp được gán</th>
-                  <th>Mức độ</th>
+                  <th>Số lượt nộp</th>
                   <th>Kết quả</th>
-                  <th>Xếp hạng</th>
                   <th>Điểm TB</th>
                   <th>Làm lại</th>
                   <th>Ngày tạo</th>
@@ -465,9 +457,6 @@ export default function TeacherDashboardPage() {
                           ))
                         )}
                       </div>
-                    </td>
-                    <td>
-                      <span className={s.diffBadge}>{diffLabel[ex.difficulty] ?? ex.difficulty}</span>
                     </td>
                     <td>{ex.result_count} bài nộp</td>
                     <td>

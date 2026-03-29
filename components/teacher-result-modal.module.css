@@ -180,35 +180,9 @@
   color: #dc2626 !important;
   font-weight: 500;
 }
-.answerSummary {
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: var(--bg);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  font-size: 13px;
-}
-.sumRow {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
-  min-width: 0;
-}
-.sumRow:last-child {
-  margin-bottom: 0;
-}
 .sumLabel {
   color: var(--text-3);
   font-size: 12px;
-  flex-shrink: 0;
-}
-.sumBody {
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 .exp {
   font-size: 12px;

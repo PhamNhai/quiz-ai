@@ -124,19 +124,8 @@
 .preview strong {
   color: var(--text-2);
 }
-.toolbarHint {
-  font-size: 11px;
-  color: var(--text-3);
-  margin: 0 0 4px;
-}
 .fieldSpaced {
   margin-top: 12px;
-}
-.optField {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
 }
 .optPreviewList {
   margin: 8px 0 0;
