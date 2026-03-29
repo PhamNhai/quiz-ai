@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useSchoolManagerExamRedirect } from '@/app/teacher/useSchoolManagerExamRedirect'
 import { ExamEditorForm } from '@/components/ExamEditorForm'
 import {
   normalizeExamQuestionsList,
@@ -27,6 +28,7 @@ type DraftMeta = {
 type Draft = { questions: unknown[]; meta: DraftMeta }
 
 export default function ReviewPage() {
+  useSchoolManagerExamRedirect()
   const router = useRouter()
   const [draft, setDraft] = useState<Draft | null>(null)
   const [questions, setQuestions] = useState<ExamQuestion[]>([])

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
+import { useSchoolManagerExamRedirect } from '@/app/teacher/useSchoolManagerExamRedirect'
 import { TeacherResultDetailModal } from '@/components/TeacherResultDetailModal'
 import { TeacherRowMenu } from '@/components/TeacherRowMenu'
 import s from './exam-board.module.css'
@@ -20,6 +21,7 @@ type Row = {
 type Exam = { id: number; exam_code: string; topic: string; subject: string; grade: string }
 
 export default function ClassExamBoardPage() {
+  useSchoolManagerExamRedirect()
   const { id, examId } = useParams<{ id: string; examId: string }>()
   const router = useRouter()
   const [loading, setLoading] = useState(true)

@@ -18,6 +18,7 @@ type Exam = {
   difficulty: string
   allow_retake: boolean
   created_at: string
+  creator_name?: string
   result_count: number
   avg_score: number | null
   classes: ClassRef[]
@@ -203,12 +204,6 @@ export default function TeacherDashboardPage() {
     setTimeout(() => setToast(null), 2400)
   }
 
-  async function logout() {
-    await fetch('/api/auth/teacher', { method: 'DELETE', credentials: 'include' })
-    router.replace('/teacher/login')
-    router.refresh()
-  }
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return exams.filter(e => {
@@ -343,16 +338,16 @@ export default function TeacherDashboardPage() {
           <Link href="/teacher/create" className={s.btnCreate}>
             + Tạo đề mới
           </Link>
-          <button type="button" onClick={logout} className={s.btnGhost}>
-            Đăng xuất
-          </button>
         </div>
       </div>
 
       <div className={s.container}>
-        <p className={s.lead}>
-          Danh sách đề đã tạo — lọc theo môn hoặc mã đề. Đề gắn lớp: học sinh phải đúng tên + mật khẩu trong lớp.
-        </p>
+        <div>
+          <p className={s.lead}>Danh sách đề đã tạo — lọc theo môn hoặc mã đề.</p>
+          <p className={s.leadSub}>
+            Đề gắn lớp: học sinh phải đúng tên + mật khẩu trong lớp.
+          </p>
+        </div>
 
         <div className={s.filters}>
           <input
@@ -419,7 +414,7 @@ export default function TeacherDashboardPage() {
                   <th>Chủ đề</th>
                   <th>Môn / Lớp</th>
                   <th>Lớp được gán</th>
-                  <th>Số lượt nộp</th>
+                  <th>Người tạo</th>
                   <th>Kết quả</th>
                   <th>Điểm TB</th>
                   <th>QR</th>
@@ -484,7 +479,9 @@ export default function TeacherDashboardPage() {
                         </button>
                       </div>
                     </td>
-                    <td>{ex.result_count}</td>
+                    <td className={s.tdCreator} title={ex.creator_name ?? ''}>
+                      {ex.creator_name ?? '—'}
+                    </td>
                     <td>
                       <Link href={`/teacher/stats/${ex.id}`} className={s.rankLink}>
                         Xem
@@ -507,7 +504,13 @@ export default function TeacherDashboardPage() {
                     <td className={s.date}>{new Date(ex.created_at).toLocaleDateString('vi-VN')}</td>
                     <td className={s.tdActions}>
                       <TeacherRowMenu
-                        items={[{ label: 'Xóa đề', onClick: () => void deleteExam(ex.id) }]}
+                        items={[
+                          {
+                            label: 'Sửa đề',
+                            onClick: () => router.push(`/teacher/exams/${ex.id}/edit`),
+                          },
+                          { label: 'Xóa đề', onClick: () => void deleteExam(ex.id) },
+                        ]}
                       />
                     </td>
                   </tr>

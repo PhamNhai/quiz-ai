@@ -6,7 +6,8 @@ import { ClassMultiSelect } from '@/components/ClassMultiSelect'
 import { GRADES_ALL, SUBJECTS_ALL, getSubtopics } from '@/lib/curriculum'
 import s from '../teacher.module.css'
 
-const COUNTS = [10, 20, 30]
+/** Gợi ý nhanh — có thể nhập số tùy ý (1–100), không bắt bội số 5. */
+const COUNTS = [7, 12, 18, 24]
 const DIFFS = [
   { v: 'easy', l: 'Dễ', d: 'Nhận biết' },
   { v: 'medium', l: 'Trung bình', d: 'Thông hiểu' },
@@ -232,9 +233,9 @@ export default function CreateExamPage() {
             ))}
             <input
               type="number"
-              min={5}
-              max={50}
-              placeholder="Tùy ý (5–50)"
+              min={1}
+              max={100}
+              placeholder="Tùy ý (1–100)"
               className={s.inputSm}
               value={customCount}
               onChange={e => {
@@ -345,7 +346,9 @@ export default function CreateExamPage() {
             '✦  Tạo đề với AI →'
           )}
         </button>
-        {!canSubmit && <p className={s.hint}>Chọn Môn học, Khối lớp, nhập Chủ đề và Số câu (≥ 5).</p>}
+        {!canSubmit && (
+          <p className={s.hint}>Chọn Môn học, Khối lớp, nhập Chủ đề và Số câu (1–100, tùy ý).</p>
+        )}
       </div>
     </div>
   )

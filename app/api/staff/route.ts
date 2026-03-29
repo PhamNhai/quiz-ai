@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
 import { hashPassword } from '@/lib/password'
-import { forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
+import { canManageStaffAccounts, forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 export async function GET(req: NextRequest) {
   const session = await getStaffSession(req)
   if (!session) return unauthorized()
-  if (session.role !== 'admin') return forbidden()
+  if (!canManageStaffAccounts(session)) return forbidden()
   await initDB()
   const rows = (await sql`
     SELECT id, username, role, display_name, created_at FROM staff_users ORDER BY created_at DESC
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await getStaffSession(req)
   if (!session) return unauthorized()
-  if (session.role !== 'admin') return forbidden()
+  if (!canManageStaffAccounts(session)) return forbidden()
   await initDB()
   const body = await req.json()
   const username = String(body.username ?? '').trim()

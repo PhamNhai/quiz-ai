@@ -1,11 +1,12 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useStaffMe } from './useStaffMe'
 import s from './teacher-shell.module.css'
 
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const me = useStaffMe()
   const noShell =
     pathname.startsWith('/teacher/login') ||
@@ -20,15 +21,18 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const staff = pathname.startsWith('/teacher/staff')
 
   const showExamNav = me?.role !== 'school_manager'
-  const showStaffNav = me?.role === 'admin'
-  const roleLabel =
-    me?.role === 'admin'
-      ? 'Quản trị'
-      : me?.role === 'school_manager'
-        ? 'Quản lý trường'
-        : me?.role === 'teacher'
-          ? 'Giáo viên'
-          : ''
+  /** Chỉ tài khoản adminer thấy mục Quản trị (không phải mọi admin). */
+  const showStaffNav = me?.role === 'admin' && me?.username === 'adminer'
+
+  const userLabel =
+    me &&
+    (me.displayName && me.displayName.trim() ? me.displayName.trim() : me.username)
+
+  async function logout() {
+    await fetch('/api/auth/teacher', { method: 'DELETE', credentials: 'include' })
+    router.replace('/teacher/login')
+    router.refresh()
+  }
 
   return (
     <div className={s.shell}>
@@ -36,7 +40,16 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         <Link href={showExamNav ? '/teacher' : '/teacher/classes'} className={s.brand}>
           QuizAI
         </Link>
-        {roleLabel && <p className={s.roleBadge}>{roleLabel}</p>}
+        {userLabel ? (
+          <>
+            <p className={s.userLine}>{userLabel}</p>
+            <div className={s.homeRow}>
+              <Link href="/" className={s.homeLink}>
+                Trang chủ
+              </Link>
+            </div>
+          </>
+        ) : null}
         <nav className={s.nav}>
           {showExamNav && (
             <div className={s.group}>
@@ -52,14 +65,24 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             </div>
           )}
 
-          <div className={s.group}>
-            <div className={s.groupLabel}>Lớp & học sinh</div>
-            <div className={s.subNav}>
-              <Link href="/teacher/classes" className={classes ? s.active : ''}>
-                Danh sách lớp
-              </Link>
+          {showExamNav ? (
+            <div className={s.group}>
+              <div className={s.groupLabel}>Lớp & học sinh</div>
+              <div className={s.subNav}>
+                <Link href="/teacher/classes" className={classes ? s.active : ''}>
+                  Danh sách lớp
+                </Link>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className={s.group}>
+              <div className={s.subNav}>
+                <Link href="/teacher/classes" className={classes ? s.active : ''}>
+                  Danh sách lớp
+                </Link>
+              </div>
+            </div>
+          )}
 
           {showStaffNav && (
             <div className={s.group}>
@@ -72,8 +95,10 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             </div>
           )}
         </nav>
-        <div className={s.footer}>
-          <Link href="/">← Trang chủ</Link>
+        <div className={s.asideFooter}>
+          <button type="button" className={s.logoutBtn} onClick={() => void logout()}>
+            Đăng xuất
+          </button>
         </div>
       </aside>
       <main className={s.main}>{children}</main>

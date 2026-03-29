@@ -3,9 +3,11 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Suspense, useState, useEffect } from 'react'
 import QRCode from 'qrcode'
+import { useSchoolManagerExamRedirect } from '@/app/teacher/useSchoolManagerExamRedirect'
 import s from './success.module.css'
 
 function Content() {
+  useSchoolManagerExamRedirect()
   const params  = useSearchParams()
   const examId  = params.get('id')
   const examCode= params.get('code') ?? examId

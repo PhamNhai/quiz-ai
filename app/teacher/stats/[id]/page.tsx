@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useSchoolManagerExamRedirect } from '@/app/teacher/useSchoolManagerExamRedirect'
 import { csvStringToUtf8Blob, excelSafeScoreText, toExcelCsv } from '@/lib/csv-excel'
 import { TeacherResultDetailModal } from '@/components/TeacherResultDetailModal'
 import { TeacherRowMenu } from '@/components/TeacherRowMenu'
@@ -33,6 +34,7 @@ function buildResultsCsv(rows: Result[]): string {
 }
 
 export default function StatsPage() {
+  useSchoolManagerExamRedirect()
   const { id }    = useParams<{ id: string }>()
   const router    = useRouter()
   const [results, setResults] = useState<Result[]>([])

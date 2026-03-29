@@ -14,6 +14,11 @@ export async function GET(req: NextRequest) {
       session.role === 'admin'
         ? ((await sql`
       SELECT e.id, e.exam_code, e.topic, e.subject, e.grade, e.difficulty, e.allow_retake, e.created_at,
+        COALESCE(
+          (SELECT COALESCE(NULLIF(TRIM(su.display_name), ''), su.username)
+           FROM staff_users su WHERE su.id = e.created_by),
+          '—'
+        ) AS creator_name,
         COUNT(r.id)::int AS result_count,
         ROUND(AVG(r.score / r.total_questions * 100))::int AS avg_score,
         COALESCE(
@@ -46,6 +51,7 @@ export async function GET(req: NextRequest) {
             difficulty: string
             allow_retake: boolean
             created_at: Date | string
+            creator_name: string
             result_count: number
             avg_score: number | null
             classes: {
@@ -57,6 +63,11 @@ export async function GET(req: NextRequest) {
           }>)
         : ((await sql`
       SELECT e.id, e.exam_code, e.topic, e.subject, e.grade, e.difficulty, e.allow_retake, e.created_at,
+        COALESCE(
+          (SELECT COALESCE(NULLIF(TRIM(su.display_name), ''), su.username)
+           FROM staff_users su WHERE su.id = e.created_by),
+          '—'
+        ) AS creator_name,
         COUNT(r.id)::int AS result_count,
         ROUND(AVG(r.score / r.total_questions * 100))::int AS avg_score,
         COALESCE(
@@ -90,6 +101,7 @@ export async function GET(req: NextRequest) {
             difficulty: string
             allow_retake: boolean
             created_at: Date | string
+            creator_name: string
             result_count: number
             avg_score: number | null
             classes: {

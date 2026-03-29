@@ -27,7 +27,7 @@ export default function StaffPage() {
 
   useEffect(() => {
     if (me === undefined) return
-    if (me === null || me.role !== 'admin') {
+    if (me === null || me.role !== 'admin' || me.username !== 'adminer') {
       router.replace('/teacher/classes')
       return
     }

@@ -5,6 +5,8 @@ export type StaffMe = {
   userId: number
   role: 'admin' | 'school_manager' | 'teacher'
   username: string
+  /** Tên hiển thị trong DB; nếu trống dùng username ở UI */
+  displayName?: string | null
 }
 
 /** undefined = đang tải; null = chưa đăng nhập / lỗi */

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
+import { useSchoolManagerExamRedirect } from '@/app/teacher/useSchoolManagerExamRedirect'
 import { ExamEditorForm } from '@/components/ExamEditorForm'
 import {
   emptyExamQuestion,
@@ -22,6 +23,7 @@ type ExamHead = {
 }
 
 export default function EditExamPage() {
+  useSchoolManagerExamRedirect()
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [loading, setLoading] = useState(true)

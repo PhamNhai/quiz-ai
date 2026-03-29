@@ -117,3 +117,8 @@ export function canManageExams(s: StaffSession): boolean {
 export function canManageClasses(s: StaffSession): boolean {
   return s.role === 'admin' || s.role === 'school_manager'
 }
+
+/** Quản lý tài khoản nhân sự — chỉ tài khoản adminer. */
+export function canManageStaffAccounts(s: StaffSession): boolean {
+  return s.role === 'admin' && s.username === 'adminer'
+}
