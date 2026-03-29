@@ -1,5 +1,5 @@
-/** Khối lớp THCS/THPT (CT 2018 — gợi ý chuyên đề) */
-export const GRADES_ALL = ['6', '7', '8', '9', '10', '11', '12'] as const
+/** Khối lớp Tiểu học + THCS + THPT (gợi ý chuyên đề CT mở rộng từ 6) */
+export const GRADES_ALL = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'] as const
 
 export const SUBJECTS_ALL = [
   'Toán',
@@ -20,6 +20,11 @@ type Grade = (typeof GRADES_ALL)[number]
 /** Gợi ý chuyên đề theo môn + khối (rút gọn, có thể mở rộng) */
 const SUBTOPICS: Partial<Record<Subject, Partial<Record<Grade, string[]>>>> = {
   Toán: {
+    '1': ['Số đếm', 'Phép cộng, trừ trong phạm vi 10', 'Hình khối cơ bản'],
+    '2': ['Bảng nhân', 'Đơn vị đo độ dài', 'Giờ, ngày'],
+    '3': ['Phép nhân, chia', 'Phân số cơ bản', 'Chu vi, diện tích'],
+    '4': ['Phân số', 'Tỉ số', 'Hình tam giác, tứ giác'],
+    '5': ['Phân số — Số thập phân', 'Diện tích hình tam giác', 'Thể tích'],
     '6': ['Số tự nhiên', 'Phân số', 'Số thập phân', 'Một số yếu tố thống kê'],
     '7': ['Số hữu tỉ', 'Hàm số và đồ thị', 'Thống kê'],
     '8': ['Đa thức', 'Phân thức đại số', 'Tam giác đồng dạng'],

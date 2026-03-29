@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
+import { parseCsvLine } from '@/lib/csv-excel'
 import d from './class-detail.module.css'
 
 type Student = { id: number; display_name: string; note: string; created_at: string }
@@ -102,16 +103,20 @@ export default function ClassDetailPage() {
   async function importCsv() {
     const lines = csvText.trim().split(/\r?\n/).filter(Boolean)
     if (lines.length < 2) {
-      alert('Cần CSV: dòng 1 là name,password,note')
+      alert('Cần CSV: dòng đầu name,password,note (phân cách , hoặc ;)')
       return
     }
+    let i0 = 0
+    if (lines[0]!.toLowerCase().startsWith('sep=')) i0 = 1
+    const headerLine = (lines[i0] ?? '').toLowerCase()
+    const sep = headerLine.includes(';') ? ';' : ','
     const rows: { name: string; password: string; note: string }[] = []
-    for (let i = 1; i < lines.length; i++) {
-      const parts = lines[i].split(',')
+    for (let i = i0 + 1; i < lines.length; i++) {
+      const parts = parseCsvLine(lines[i]!, sep)
       rows.push({
-        name: (parts[0] ?? '').replace(/^"|"$/g, '').trim(),
-        password: (parts[1] ?? '').replace(/^"|"$/g, '').trim(),
-        note: (parts[2] ?? '').replace(/^"|"$/g, '').trim(),
+        name: (parts[0] ?? '').trim(),
+        password: (parts[1] ?? '').trim(),
+        note: (parts[2] ?? '').trim(),
       })
     }
     const res = await fetch(`/api/classes/${id}/import`, {
@@ -231,7 +236,11 @@ export default function ClassDetailPage() {
                       </>
                     ) : (
                       <>
-                        <td>{s.display_name}</td>
+                        <td>
+                          <Link href={`/teacher/students/${s.id}`} className={d.nameLink}>
+                            {s.display_name}
+                          </Link>
+                        </td>
                         <td>{s.note || '—'}</td>
                         <td>
                           <button
@@ -279,7 +288,11 @@ export default function ClassDetailPage() {
               <tbody>
                 {activity.map((a, i) => (
                   <tr key={i}>
-                    <td>{a.display_name}</td>
+                    <td>
+                      <Link href={`/teacher/students/${a.student_id}`} className={d.nameLink}>
+                        {a.display_name}
+                      </Link>
+                    </td>
                     <td>{a.exam_code}</td>
                     <td>{a.topic}</td>
                     <td>{a.attempts}</td>

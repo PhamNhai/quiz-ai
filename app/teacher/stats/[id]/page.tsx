@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { toExcelCsv } from '@/lib/csv-excel'
 import s from './stats.module.css'
 
 type Result = {
@@ -15,12 +16,17 @@ type Result = {
   submitted_at: string
 }
 
-function toCSV(rows: Result[]): string {
-  const header = 'STT,Họ tên,Điểm,Tổng câu,Tỉ lệ (%),Nộp lúc,Nhận xét AI'
-  const lines  = rows.map((r, i) =>
-    `${i+1},"${r.student_name}",${r.score},${r.total_questions},${r.percentage},"${new Date(r.submitted_at).toLocaleString('vi-VN')}","${(r.ai_comment ?? '').replace(/"/g,'""')}"`
-  )
-  return [header, ...lines].join('\n')
+function buildResultsCsv(rows: Result[]): string {
+  const header = ['STT', 'Họ tên', 'Điểm', 'Tổng câu', 'Tỉ lệ (%)', 'Nộp lúc']
+  const data = rows.map((r, i) => [
+    i + 1,
+    r.student_name,
+    `${r.score}/${r.total_questions}`,
+    r.total_questions,
+    r.percentage,
+    new Date(r.submitted_at).toLocaleString('vi-VN'),
+  ])
+  return toExcelCsv(header, data)
 }
 
 export default function StatsPage() {
@@ -43,8 +49,8 @@ export default function StatsPage() {
   }, [id, router])
 
   function downloadCSV() {
-    const csv  = toCSV(results)
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+    const csv = buildResultsCsv(results)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href = url; a.download = `ketqua-de${id}.csv`; a.click()

@@ -1,4 +1,4 @@
-import { AI_QUOTA_MESSAGE_VI } from './ai-quota'
+import { AI_QUOTA_MESSAGE_VI, isGeminiQuotaError } from './ai-quota'
 import { callOpenAICompatChat } from './openai-compat'
 
 export { AI_QUOTA_MESSAGE_VI, GEMINI_QUOTA_MESSAGE_VI, isGeminiQuotaError } from './ai-quota'
@@ -16,11 +16,42 @@ const defaultSystem = {
   ],
 }
 
-/** `gemini` (mặc định) hoặc `openai_compat` (Groq, OpenRouter, Together — API giống OpenAI). */
-export function getAIProvider(): 'gemini' | 'openai_compat' {
-  const p = (process.env.AI_PROVIDER ?? 'gemini').toLowerCase().trim()
+function parseProviderToken(s: string): 'gemini' | 'openai_compat' {
+  const p = s.trim().toLowerCase()
   if (p === 'openai_compat' || p === 'openai') return 'openai_compat'
   return 'gemini'
+}
+
+/**
+ * Thứ tự gọi AI. Có thể đặt `AI_PROVIDER=gemini,openai_compat`.
+ * Nếu chỉ một provider và `AI_AUTO_FALLBACK` không phải `false`, tự thêm provider kia khi đã có key tương ứng (hết quota → thử tiếp).
+ */
+export function getProviderChain(): ('gemini' | 'openai_compat')[] {
+  const raw = (process.env.AI_PROVIDER ?? 'gemini').trim()
+  const autoFallback = process.env.AI_AUTO_FALLBACK !== 'false'
+  if (raw.includes(',')) {
+    const seen = new Set<string>()
+    const out: ('gemini' | 'openai_compat')[] = []
+    for (const part of raw.split(',')) {
+      const p = parseProviderToken(part)
+      if (seen.has(p)) continue
+      seen.add(p)
+      out.push(p)
+    }
+    return out.length ? out : ['gemini']
+  }
+  const primary = parseProviderToken(raw)
+  const out: ('gemini' | 'openai_compat')[] = [primary]
+  if (autoFallback) {
+    if (primary === 'gemini' && process.env.OPENAI_COMPAT_API_KEY) out.push('openai_compat')
+    if (primary === 'openai_compat' && process.env.GEMINI_API_KEY) out.push('gemini')
+  }
+  return out
+}
+
+/** Provider chính (phần tử đầu chuỗi). */
+export function getAIProvider(): 'gemini' | 'openai_compat' {
+  return getProviderChain()[0] ?? 'gemini'
 }
 
 function throwGeminiHttpError(res: Response, errBody: unknown): never {
@@ -64,17 +95,7 @@ const EXAM_ARRAY_SCHEMA = {
   },
 }
 
-export async function callGemini(prompt: string, system?: string): Promise<string> {
-  if (getAIProvider() === 'openai_compat') {
-    return callOpenAICompatChat(
-      [
-        { role: 'system', content: system ?? defaultSystem.parts[0].text },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.55 }
-    )
-  }
-
+async function callGeminiApiText(prompt: string, system?: string): Promise<string> {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('Thiếu GEMINI_API_KEY')
 
@@ -99,23 +120,39 @@ export async function callGemini(prompt: string, system?: string): Promise<strin
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 }
 
-/**
- * Gọi Gemini với responseMimeType = JSON + schema mảng câu hỏi.
- * Trả về mảng đã parse (ổn định hơn so với text tự do).
- */
-export async function callGeminiExamStructured(prompt: string): Promise<unknown[]> {
-  if (getAIProvider() === 'openai_compat') {
-    const text = await callOpenAICompatChat(
-      [
-        { role: 'system', content: defaultSystem.parts[0].text },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.45 }
-    )
-    if (!text.trim()) throw new Error('Phản hồi rỗng')
-    return extractJSON(text)
+export async function callGemini(prompt: string, system?: string): Promise<string> {
+  const chain = getProviderChain()
+  let lastQuota: unknown
+  for (let i = 0; i < chain.length; i++) {
+    const p = chain[i]
+    try {
+      if (p === 'openai_compat') {
+        if (!process.env.OPENAI_COMPAT_API_KEY) continue
+        return await callOpenAICompatChat(
+          [
+            { role: 'system', content: system ?? defaultSystem.parts[0].text },
+            { role: 'user', content: prompt },
+          ],
+          { temperature: 0.55 }
+        )
+      }
+      if (!process.env.GEMINI_API_KEY) continue
+      return await callGeminiApiText(prompt, system)
+    } catch (e) {
+      if (isGeminiQuotaError(e) && i < chain.length - 1) {
+        lastQuota = e
+        continue
+      }
+      throw e
+    }
   }
+  if (lastQuota) throw lastQuota
+  throw new Error(
+    'Không gọi được AI: thiếu API key (GEMINI_API_KEY hoặc OPENAI_COMPAT_API_KEY) hoặc đã hết hạn mức cả hai.'
+  )
+}
 
+async function callGeminiApiExamStructured(prompt: string): Promise<unknown[]> {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error('Thiếu GEMINI_API_KEY')
 
@@ -146,6 +183,44 @@ export async function callGeminiExamStructured(prompt: string): Promise<unknown[
   const parsed = JSON.parse(text) as unknown
   if (!Array.isArray(parsed)) throw new Error('Không phải mảng')
   return parsed
+}
+
+/**
+ * Gọi Gemini JSON + schema; với openai_compat dùng text + extractJSON.
+ * Hết quota provider đầu → tự thử provider tiếp theo trong chuỗi (nếu có key).
+ */
+export async function callGeminiExamStructured(prompt: string): Promise<unknown[]> {
+  const chain = getProviderChain()
+  let lastQuota: unknown
+  for (let i = 0; i < chain.length; i++) {
+    const p = chain[i]
+    try {
+      if (p === 'openai_compat') {
+        if (!process.env.OPENAI_COMPAT_API_KEY) continue
+        const text = await callOpenAICompatChat(
+          [
+            { role: 'system', content: defaultSystem.parts[0].text },
+            { role: 'user', content: prompt },
+          ],
+          { temperature: 0.45 }
+        )
+        if (!text.trim()) throw new Error('Phản hồi rỗng')
+        return extractJSON(text)
+      }
+      if (!process.env.GEMINI_API_KEY) continue
+      return await callGeminiApiExamStructured(prompt)
+    } catch (e) {
+      if (isGeminiQuotaError(e) && i < chain.length - 1) {
+        lastQuota = e
+        continue
+      }
+      throw e
+    }
+  }
+  if (lastQuota) throw lastQuota
+  throw new Error(
+    'Không tạo được đề: thiếu API key hoặc hết hạn mức cả các provider đã cấu hình.'
+  )
 }
 
 /**
@@ -283,7 +358,10 @@ export function buildCommentPrompt(p: {
   wrongQuestions: string[]
 }) {
   const pct = Math.round((p.score / p.total) * 100)
-  return `Học sinh "${p.studentName}" làm bài ${p.subject}: ${p.score}/${p.total} câu đúng (${pct}%).
-${p.wrongQuestions.length > 0 ? `Sai ở: ${p.wrongQuestions.slice(0, 4).join(' | ')}` : ''}
-Viết 2-3 câu nhận xét tiếng Việt: khen điểm mạnh, chỉ điểm yếu, gợi ý cải thiện. Thân thiện, khích lệ.`
+  return `Học sinh "${p.studentName}" — ${p.subject}: ${p.score}/${p.total} câu đúng (${pct}%).
+${p.wrongQuestions.length > 0 ? `Câu sai gợi ý ôn: ${p.wrongQuestions.slice(0, 3).join('; ')}.` : ''}
+Viết tối đa 2–3 câu tiếng Việt, ngắn gọn, không lặp điểm số:
+(1) phần nắm chắc hoặc làm tốt (nếu có);
+(2) phần còn yếu cần ôn thêm.
+Không dùng gạch đầu dòng dài, không khơi chuyện ngoài bài.`
 }
