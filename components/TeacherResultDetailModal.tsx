@@ -239,6 +239,32 @@ export function TeacherResultDetailModal(props: {
                       )
                     })}
                   </ul>
+                  {!q.isCorrect && q.studentAnswer ? (
+                    <div className={s.answerSummary}>
+                      <div className={s.sumRow}>
+                        <span className={s.sumLabel}>HS đã chọn ({String(q.studentAnswer)}):</span>
+                        <div className={`${s.sumBody} ${s.optStudent}`}>
+                          <MathText
+                            text={String(
+                              q.options[String(q.studentAnswer)] ?? q.studentAnswer ?? ''
+                            )}
+                            as="span"
+                          />
+                        </div>
+                      </div>
+                      <div className={s.sumRow}>
+                        <span className={s.sumLabel}>Đáp án đúng ({q.correct}):</span>
+                        <div className={`${s.sumBody} ${s.optCorrect}`}>
+                          <MathText text={String(q.options[q.correct] ?? '')} as="span" />
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                  {!q.isCorrect && !q.studentAnswer ? (
+                    <p className={s.sumLabel} style={{ marginTop: 8 }}>
+                      Chưa chọn đáp án.
+                    </p>
+                  ) : null}
                   {q.explanation ? (
                     <div className={s.exp}>
                       <MathText text={q.explanation} as="div" />

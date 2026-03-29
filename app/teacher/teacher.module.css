@@ -56,3 +56,17 @@
 .toggleBtn { flex:1; padding:9px; border:1px solid var(--border-strong); border-radius:var(--radius); font-size:13px; font-weight:500; background:var(--surface); color:var(--text-2); transition:all .12s; }
 .toggleBtn:hover { border-color:var(--accent); }
 .toggleOn { background:var(--accent-light) !important; border-color:var(--accent) !important; color:var(--accent-text) !important; }
+.selectMulti {
+  width: 100%;
+  min-height: 120px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+.selectMulti:focus { border-color: var(--accent); }
+.selectMulti option { padding: 6px; }

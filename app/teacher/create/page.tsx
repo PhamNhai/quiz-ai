@@ -43,10 +43,6 @@ export default function CreateExamPage() {
   const canSubmit = subject && grade && topic.trim() && finalCount >= 5
   const suggestions = getSubtopics(subject, grade)
 
-  function toggleClass(id: number) {
-    setClassIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]))
-  }
-
   async function handleSubmit() {
     if (!canSubmit || loading) return
     setLoading(true)
@@ -76,7 +72,24 @@ export default function CreateExamPage() {
       }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      sessionStorage.setItem('review_draft', JSON.stringify(data))
+      sessionStorage.setItem(
+        'review_draft',
+        JSON.stringify({
+          questions: data.questions,
+          meta: {
+            subject,
+            grade,
+            topic,
+            subtopic,
+            difficulty,
+            extra,
+            examCode,
+            allowRetake,
+            classIds,
+            durationMinutes: durationMinutes === '' ? undefined : durationMinutes,
+          },
+        })
+      )
       router.push('/teacher/review')
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Lỗi')
@@ -103,18 +116,27 @@ export default function CreateExamPage() {
           {classes.length === 0 ? (
             <p className={s.fieldHint}>Chưa có lớp — vào &quot;Lớp học&quot; để tạo.</p>
           ) : (
-            <div className={s.chips}>
-              {classes.map(c => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => toggleClass(c.id)}
-                  className={`${s.chip} ${classIds.includes(c.id) ? s.chipOn : ''}`}
-                >
-                  {c.name} ({c.student_count})
-                </button>
-              ))}
-            </div>
+            <>
+              <p className={s.fieldHint}>
+                Chọn một hoặc nhiều lớp (giữ Ctrl / ⌘ khi bấm để chọn thêm).
+              </p>
+              <select
+                className={s.selectMulti}
+                multiple
+                size={Math.min(8, Math.max(4, classes.length))}
+                value={classIds.map(String)}
+                onChange={e => {
+                  const ids = Array.from(e.target.selectedOptions, o => Number(o.value))
+                  setClassIds(ids)
+                }}
+              >
+                {classes.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.student_count} HS)
+                  </option>
+                ))}
+              </select>
+            </>
           )}
         </div>
 

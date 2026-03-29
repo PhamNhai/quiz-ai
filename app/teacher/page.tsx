@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { GRADES_ALL, SUBJECTS_ALL } from '@/lib/curriculum'
+import { TeacherRowMenu } from '@/components/TeacherRowMenu'
 import s from './manage/manage.module.css'
 
 type ClassRef = { id: number; name: string }
@@ -168,15 +169,6 @@ export default function TeacherDashboardPage() {
     setTimeout(() => setToast(null), 2800)
   }
 
-  function toggleAssignClass(id: number) {
-    setAssignIds(prev => {
-      const n = new Set(prev)
-      if (n.has(id)) n.delete(id)
-      else n.add(id)
-      return n
-    })
-  }
-
   async function logout() {
     await fetch('/api/auth/teacher', { method: 'DELETE', credentials: 'include' })
     router.replace('/teacher/login')
@@ -248,18 +240,28 @@ export default function TeacherDashboardPage() {
                 </Link>
               </p>
             ) : (
-              <div className={s.assignList}>
-                {allClasses.map(c => (
-                  <label key={c.id} className={s.assignRow}>
-                    <input
-                      type="checkbox"
-                      checked={assignIds.has(c.id)}
-                      onChange={() => toggleAssignClass(c.id)}
-                    />
-                    <span>{c.name}</span>
-                  </label>
-                ))}
-              </div>
+              <>
+                <label className={s.modalHint} htmlFor="assign-class-multi">
+                  Chọn một hoặc nhiều lớp (giữ Ctrl / ⌘ khi bấm để chọn thêm):
+                </label>
+                <select
+                  id="assign-class-multi"
+                  className={s.selectMulti}
+                  multiple
+                  size={Math.min(10, Math.max(4, allClasses.length))}
+                  value={Array.from(assignIds).map(String)}
+                  onChange={e => {
+                    const ids = Array.from(e.target.selectedOptions, o => Number(o.value))
+                    setAssignIds(new Set(ids))
+                  }}
+                >
+                  {allClasses.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </>
             )}
             <div className={s.modalActions}>
               <button type="button" className={s.btnMini} onClick={() => setAssignExam(null)}>
@@ -385,9 +387,6 @@ export default function TeacherDashboardPage() {
                           ))
                         )}
                       </div>
-                      <button type="button" className={s.btnMini} onClick={() => openAssign(e)}>
-                        Gán lớp
-                      </button>
                     </td>
                     <td>
                       <span className={s.diffBadge}>{diffLabel[e.difficulty] ?? e.difficulty}</span>
@@ -396,21 +395,16 @@ export default function TeacherDashboardPage() {
                     <td>{e.avg_score != null ? `${e.avg_score}%` : '—'}</td>
                     <td>{e.allow_retake ? 'Nhiều lần' : '1 lần'}</td>
                     <td className={s.date}>{new Date(e.created_at).toLocaleDateString('vi-VN')}</td>
-                    <td>
-                      <div className={`${s.actions} ${s.actionsWide}`}>
-                        <button type="button" className={s.btnMini} onClick={() => copyLink(e)}>
-                          Copy link
-                        </button>
-                        <button type="button" className={s.btnMini} onClick={() => openQr(e)}>
-                          QR
-                        </button>
-                        <Link href={`/teacher/stats/${e.id}`} className={s.btnView}>
-                          Kết quả
-                        </Link>
-                        <button type="button" onClick={() => deleteExam(e.id)} className={s.btnDel}>
-                          Xóa
-                        </button>
-                      </div>
+                    <td className={s.tdActions}>
+                      <TeacherRowMenu
+                        items={[
+                          { label: 'Copy link làm bài', onClick: () => void copyLink(e) },
+                          { label: 'QR làm bài', onClick: () => void openQr(e) },
+                          { label: 'Kết quả / xếp hạng', onClick: () => router.push(`/teacher/stats/${e.id}`) },
+                          { label: 'Gán lớp', onClick: () => openAssign(e) },
+                          { label: 'Xóa đề', onClick: () => void deleteExam(e.id) },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

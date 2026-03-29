@@ -160,14 +160,45 @@
 .opts li {
   margin: 4px 0;
 }
-/* Đáp án đúng: xanh lá; đáp án HS chọn (khi sai): đỏ; trùng đúng → xanh */
-.optCorrect {
-  color: #16a34a;
+/* Đáp án đúng: xanh; HS chọn sai: đỏ — kèm :global(.katex) vì KaTeX override màu */
+.optCorrect,
+.optCorrect :global(.katex),
+.optCorrect :global(.katex *) {
+  color: #16a34a !important;
   font-weight: 500;
 }
-.optStudent {
-  color: #dc2626;
+.optStudent,
+.optStudent :global(.katex),
+.optStudent :global(.katex *) {
+  color: #dc2626 !important;
   font-weight: 500;
+}
+.answerSummary {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+.sumRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+.sumRow:last-child {
+  margin-bottom: 0;
+}
+.sumLabel {
+  color: var(--text-3);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.sumBody {
+  flex: 1;
+  min-width: 0;
 }
 .exp {
   font-size: 12px;

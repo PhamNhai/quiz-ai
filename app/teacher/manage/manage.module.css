@@ -47,15 +47,15 @@
 .btnMini{padding:4px 8px;font-size:11px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-2);cursor:pointer;white-space:nowrap}
 .btnMini:hover{border-color:var(--accent);color:var(--accent)}
 .modalBackdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
-.modal{background:var(--surface);border-radius:var(--radius-lg);padding:1.25rem;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:1.25rem;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.12)}
 .modal h3{margin:0 0 12px;font-size:16px;font-weight:600;color:var(--text)}
 .modalQr{text-align:center}
 .modalQr img{display:block;margin:0 auto 12px;border-radius:8px}
 .modalHint{font-size:12px;color:var(--text-3);word-break:break-all;margin-bottom:12px}
 .modalActions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 .btnClose{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;cursor:pointer}
-.assignList{max-height:220px;overflow-y:auto;margin:8px 0;border:1px solid var(--border);border-radius:var(--radius);padding:8px}
-.assignRow{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:14px;cursor:pointer;border-radius:4px}
-.assignRow:hover{background:var(--surface2)}
-.assignRow input{width:16px;height:16px}
+.selectMulti{width:100%;min-height:140px;padding:8px 10px;margin:8px 0;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:14px;background:var(--surface);color:var(--text);outline:none;cursor:pointer}
+.selectMulti:focus{border-color:var(--accent)}
+.selectMulti option{padding:6px}
+.tdActions{width:1%;white-space:nowrap;text-align:right;vertical-align:middle}
 @media(max-width:720px){.tableWrap{font-size:12px}.topic{max-width:120px}}

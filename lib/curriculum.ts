@@ -31,7 +31,17 @@ const SUBTOPICS: Partial<Record<Subject, Partial<Record<Grade, string[]>>>> = {
     '9': ['Hệ thức lượng trong tam giác', 'Đường tròn', 'Hàm số y = ax²'],
     '10': ['Mệnh đề và tập hợp', 'Hàm số bậc hai', 'Tam giác', 'Vector'],
     '11': ['Dãy số', 'Tổ hợp', 'Lượng giác', 'Không gian'],
-    '12': ['Ứng dụng đạo hàm', 'Nguyên hàm — Tích phân', 'Xác suất'],
+    '12': [
+      'Nguyên hàm',
+      'Tích phân',
+      'Ứng dụng hình học của tích phân',
+      'Phương trình mặt phẳng',
+      'Phương trình đường thẳng trong không gian',
+      'Công thức tính góc trong không gian',
+      'Phương trình mặt cầu',
+      'Ứng dụng đạo hàm',
+      'Xác suất',
+    ],
   },
   'Ngữ văn': {
     '6': ['Văn bản truyện', 'Viết đoạn văn', 'Ngữ pháp'],
