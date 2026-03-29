@@ -90,7 +90,13 @@ export default function ExamPage() {
       .then(r => r.json())
       .then(d => {
         if (d.error) setError(d.error)
-        else setExam(d)
+        else {
+          if (d.restrictedToClasses && sid == null) {
+            router.replace(`/exam?code=${encodeURIComponent(String(d.examCode ?? ''))}`)
+            return
+          }
+          setExam(d)
+        }
       })
       .catch(() => setError('Không tải được đề thi'))
       .finally(() => setLoading(false))

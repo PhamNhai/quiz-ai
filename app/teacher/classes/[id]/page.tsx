@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { parseCsvLine } from '@/lib/csv-excel'
@@ -14,6 +14,17 @@ type Act = {
   topic: string
   attempts: number
   last_at: string
+}
+
+type ClassExamRow = {
+  id: number
+  exam_code: string
+  topic: string
+  subject: string
+  grade: string
+  done_count: number
+  pending_count: number
+  created_at: string
 }
 
 export default function ClassDetailPage() {
@@ -31,12 +42,16 @@ export default function ClassDetailPage() {
   const [editPw, setEditPw] = useState('')
   const [editNote, setEditNote] = useState('')
   const [csvText, setCsvText] = useState('')
+  const [studentSearch, setStudentSearch] = useState('')
+  const [classExams, setClassExams] = useState<ClassExamRow[]>([])
+  const [classSize, setClassSize] = useState(0)
 
   async function load() {
-    const [r1, r2, r3] = await Promise.all([
+    const [r1, r2, r3, r4] = await Promise.all([
       fetch(`/api/classes/${id}`, { credentials: 'include' }),
       fetch(`/api/classes/${id}/students`, { credentials: 'include' }),
       fetch(`/api/classes/${id}/activity`, { credentials: 'include' }),
+      fetch(`/api/classes/${id}/exams`, { credentials: 'include' }),
     ])
     if (r1.status === 401) {
       router.replace('/teacher/login')
@@ -48,7 +63,24 @@ export default function ClassDetailPage() {
     setStudents(Array.isArray(st) ? st : [])
     const ac = await r3.json()
     setActivity(Array.isArray(ac) ? ac : [])
+    if (r4.ok) {
+      const ex = await r4.json()
+      setClassExams(Array.isArray(ex.exams) ? ex.exams : [])
+      setClassSize(typeof ex.classSize === 'number' ? ex.classSize : 0)
+    } else {
+      setClassExams([])
+    }
   }
+
+  const filteredStudents = useMemo(() => {
+    const q = studentSearch.trim().toLowerCase()
+    if (!q) return students
+    return students.filter(
+      s =>
+        s.display_name.toLowerCase().includes(q) ||
+        (s.note || '').toLowerCase().includes(q)
+    )
+  }, [students, studentSearch])
 
   useEffect(() => {
     setLoading(true)
@@ -139,6 +171,34 @@ export default function ClassDetailPage() {
       <h1 className={d.h1}>{className || 'Lớp'}</h1>
 
       <section className={d.section}>
+        <h2 className={d.h2}>Đề gán cho lớp</h2>
+        {classExams.length === 0 ? (
+          <p className={d.hint}>
+            Chưa gán đề nào. Ở màn <strong>Tổng quan đề</strong>, dùng &quot;Gán lớp&quot; cho đề cần học sinh
+            lớp này làm.
+          </p>
+        ) : (
+          <ul className={d.examList}>
+            {classExams.map(e => (
+              <li key={e.id} className={d.examRow}>
+                <Link href={`/teacher/classes/${id}/exams/${e.id}`} className={d.examLink}>
+                  <span className={d.examCode}>{e.exam_code}</span>
+                  <span className={d.examTopic}>{e.topic}</span>
+                  <span className={d.examMeta}>
+                    {e.subject} · Lớp {e.grade}
+                  </span>
+                </Link>
+                <span className={d.examStat}>
+                  {e.done_count}/{classSize || students.length} đã nộp
+                  {e.pending_count > 0 ? ` · ${e.pending_count} chưa làm` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className={d.section}>
         <h2 className={d.h2}>Thêm học sinh</h2>
         <form onSubmit={addStudent} className={d.form}>
           <input
@@ -189,6 +249,21 @@ export default function ClassDetailPage() {
 
       <section className={d.section}>
         <h2 className={d.h2}>Học sinh</h2>
+        {!loading && students.length > 0 && (
+          <div className={d.searchRow}>
+            <input
+              type="search"
+              className={d.searchInput}
+              placeholder="Tìm theo tên hoặc ghi chú…"
+              value={studentSearch}
+              onChange={e => setStudentSearch(e.target.value)}
+              aria-label="Tìm học sinh"
+            />
+            <span className={d.searchMeta}>
+              {filteredStudents.length}/{students.length} học sinh
+            </span>
+          </div>
+        )}
         {loading ? (
           <p>Đang tải…</p>
         ) : (
@@ -202,7 +277,14 @@ export default function ClassDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {students.map(s => (
+                {filteredStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className={d.emptySearch}>
+                      {students.length === 0 ? 'Chưa có học sinh.' : 'Không có học sinh khớp tìm kiếm.'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredStudents.map(s => (
                   <tr key={s.id}>
                     {editId === s.id ? (
                       <>
@@ -262,7 +344,8 @@ export default function ClassDetailPage() {
                       </>
                     )}
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -293,7 +376,11 @@ export default function ClassDetailPage() {
                         {a.display_name}
                       </Link>
                     </td>
-                    <td>{a.exam_code}</td>
+                    <td>
+                      <Link href={`/teacher/classes/${id}/exams/${a.exam_id}`} className={d.examCodeLink}>
+                        {a.exam_code}
+                      </Link>
+                    </td>
                     <td>{a.topic}</td>
                     <td>{a.attempts}</td>
                     <td>{new Date(a.last_at).toLocaleString('vi-VN')}</td>
