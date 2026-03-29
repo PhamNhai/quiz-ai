@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { toExcelCsv } from '@/lib/csv-excel'
+import { csvStringToUtf8Blob, excelSafeScoreText, toExcelCsv } from '@/lib/csv-excel'
 import { TeacherResultDetailModal } from '@/components/TeacherResultDetailModal'
 import { TeacherRowMenu } from '@/components/TeacherRowMenu'
 import s from './stats.module.css'
@@ -23,7 +23,7 @@ function buildResultsCsv(rows: Result[]): string {
   const data = rows.map((r, i) => [
     i + 1,
     r.student_name,
-    `${r.score}/${r.total_questions}`,
+    excelSafeScoreText(r.score, r.total_questions),
     r.total_questions,
     r.percentage,
     new Date(r.submitted_at).toLocaleString('vi-VN'),
@@ -53,7 +53,7 @@ export default function StatsPage() {
 
   function downloadCSV() {
     const csv = buildResultsCsv(results)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const blob = csvStringToUtf8Blob(csv)
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href = url; a.download = `ketqua-de${id}.csv`; a.click()

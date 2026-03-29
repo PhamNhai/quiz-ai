@@ -38,7 +38,7 @@ export function TeacherRowMenu(props: {
   }, [open, items.length])
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
+    function onDoc(e: Event) {
       const t = e.target as Node
       if (btnRef.current?.contains(t) || menuRef.current?.contains(t)) return
       setOpen(false)

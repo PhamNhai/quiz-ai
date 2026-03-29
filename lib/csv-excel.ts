@@ -1,10 +1,25 @@
-/** CSV: UTF-8 BOM, phân cách `;`, CRLF (Excel VN nhận `;` khi mở file). */
+/** CSV: UTF-8 BOM, phân cách `;`, CRLF (Excel VN thường dùng `;`). */
 const SEP = ';'
 
 function escCell(v: string | number): string {
   const s = String(v)
-  if (s.includes(SEP) || s.includes('"') || /[\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`
+  if (s.includes(SEP) || s.includes('"') || s.includes('\t') || /[\r\n]/.test(s))
+    return `"${s.replace(/"/g, '""')}"`
   return s
+}
+
+/** Tránh Excel tự coi `3/5` là ngày — thêm tab ẩn ở đầu ô (vẫn hiển thị đúng). */
+export function excelSafeScoreText(score: number, total: number): string {
+  return `\t${score}/${total}`
+}
+
+/**
+ * Chuỗi CSV đầy đủ (có BOM) → Blob UTF-8 thật (ổn định hơn khi tải, Excel nhận UTF-8).
+ */
+export function csvStringToUtf8Blob(csvWithBom: string): Blob {
+  return new Blob([new TextEncoder().encode(csvWithBom)], {
+    type: 'text/csv;charset=utf-8',
+  })
 }
 
 export function toExcelCsv(header: string[], rows: (string | number)[][]): string {
