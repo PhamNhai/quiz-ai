@@ -28,6 +28,7 @@ export default function CreateExamPage() {
   const [extra, setExtra] = useState('')
   const [examCode, setExamCode] = useState('')
   const [allowRetake, setAllowRetake] = useState(true)
+  const [durationMinutes, setDurationMinutes] = useState<number | ''>('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -66,6 +67,7 @@ export default function CreateExamPage() {
           examCode,
           allowRetake,
           classIds,
+          durationMinutes: durationMinutes === '' ? undefined : durationMinutes,
         }),
       })
       if (res.status === 401) {
@@ -275,6 +277,29 @@ export default function CreateExamPage() {
                 </button>
               </div>
             </div>
+          </div>
+          <div style={{ marginTop: '1.25rem' }}>
+            <label className={s.label}>
+              Thời gian làm bài <span className={s.opt}>(tùy chọn)</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={600}
+              placeholder="Không giới hạn"
+              className={s.inputSm}
+              style={{ maxWidth: 200 }}
+              value={durationMinutes === '' ? '' : durationMinutes}
+              onChange={e => {
+                const v = e.target.value
+                if (v === '') setDurationMinutes('')
+                else {
+                  const n = parseInt(v, 10)
+                  if (!Number.isNaN(n)) setDurationMinutes(Math.min(600, Math.max(1, n)))
+                }
+              }}
+            />
+            <p className={s.fieldHint}>Phút (1–600). Để trống = không giới hạn thời gian.</p>
           </div>
         </div>
 

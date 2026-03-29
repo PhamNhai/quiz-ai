@@ -111,6 +111,15 @@ export default function ExamPage() {
     shuffledRef.current = shuffledQuestions
   }, [shuffledQuestions])
 
+  /** Đề không giới hạn phút: ghi nhận mốc bắt đầu để lưu thời gian làm bài khi nộp. */
+  useEffect(() => {
+    if (!exam) return
+    const hasDur = exam.durationMinutes != null && exam.durationMinutes > 0
+    if (!hasDur && startedAtMsRef.current == null) {
+      startedAtMsRef.current = Date.now()
+    }
+  }, [exam])
+
   const runSubmit = useCallback(
     async (fromTimeout: boolean) => {
       const ex = examRef.current
@@ -133,7 +142,7 @@ export default function ExamPage() {
           studentId: studentId ?? undefined,
           answers: answersRef.current,
         }
-        if (ex.durationMinutes && ex.durationMinutes > 0 && startedAtMsRef.current != null) {
+        if (startedAtMsRef.current != null) {
           body.startedAtMs = startedAtMsRef.current
         }
         const res = await fetch('/api/submit-result', {

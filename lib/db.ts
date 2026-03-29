@@ -63,6 +63,7 @@ export async function initDB() {
     )
   `
   await sql`ALTER TABLE results ADD COLUMN IF NOT EXISTS student_id INTEGER`
+  await sql`ALTER TABLE results ADD COLUMN IF NOT EXISTS duration_ms INTEGER`
 
   await sql`
     CREATE TABLE IF NOT EXISTS classes (

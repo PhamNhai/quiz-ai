@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toExcelCsv } from '@/lib/csv-excel'
+import { TeacherResultDetailModal } from '@/components/TeacherResultDetailModal'
+import { TeacherRowMenu } from '@/components/TeacherRowMenu'
 import s from './stats.module.css'
 
 type Result = {
@@ -34,6 +36,7 @@ export default function StatsPage() {
   const router    = useRouter()
   const [results, setResults] = useState<Result[]>([])
   const [loading, setLoading] = useState(true)
+  const [modal, setModal] = useState<{ resultId: number; studentId: number | null } | null>(null)
 
   useEffect(() => {
     fetch(`/api/exams/${id}/results`, { credentials: 'include' })
@@ -108,6 +111,7 @@ export default function StatsPage() {
                 <tr>
                   <th>Xếp hạng</th><th>Họ và tên</th><th>Điểm</th>
                   <th>Tổng câu</th><th>Tỉ lệ</th><th>Thời gian nộp</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -139,6 +143,25 @@ export default function StatsPage() {
                       </div>
                     </td>
                     <td className={s.dateCell}>{new Date(r.submitted_at).toLocaleString('vi-VN')}</td>
+                    <td className={s.actions}>
+                      <TeacherRowMenu
+                        items={[
+                          {
+                            label: 'Xem đề & đáp án',
+                            onClick: () =>
+                              setModal({ resultId: r.id, studentId: r.student_id ?? null }),
+                          },
+                          ...(r.student_id != null
+                            ? [
+                                {
+                                  label: 'Hồ sơ học sinh',
+                                  onClick: () => router.push(`/teacher/students/${r.student_id}`),
+                                },
+                              ]
+                            : []),
+                        ]}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -146,6 +169,16 @@ export default function StatsPage() {
           </div>
         )}
       </div>
+      {modal && (
+        <TeacherResultDetailModal
+          key={`${modal.resultId}-${id}`}
+          open
+          onClose={() => setModal(null)}
+          studentId={modal.studentId ?? undefined}
+          examId={Number(id)}
+          initialResultId={modal.resultId}
+        />
+      )}
     </div>
   )
 }

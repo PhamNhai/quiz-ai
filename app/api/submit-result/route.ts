@@ -21,9 +21,12 @@ export async function POST(req: NextRequest) {
 
     const exam = rows[0]
 
+    const started = Number(startedAtMs)
+    const durationMs =
+      !Number.isNaN(started) && started > 0 ? Math.max(0, Date.now() - started) : null
+
     const dur = exam.duration_minutes != null ? Number(exam.duration_minutes) : null
     if (dur != null && dur > 0) {
-      const started = Number(startedAtMs)
       if (!started || Number.isNaN(started))
         return NextResponse.json({ error: 'Thiếu thông tin thời gian làm bài' }, { status: 400 })
       if (started > Date.now() + 60_000)
@@ -109,8 +112,8 @@ export async function POST(req: NextRequest) {
 
     const sid = studentId ? Number(studentId) : null
     const saved = (await sql`
-      INSERT INTO results (exam_id, student_name, student_id, score, total_questions, answers, ai_comment)
-      VALUES (${examId}, ${studentName}, ${sid}, ${score}, ${questions.length}, ${JSON.stringify(answers)}, ${aiComment})
+      INSERT INTO results (exam_id, student_name, student_id, score, total_questions, answers, ai_comment, duration_ms)
+      VALUES (${examId}, ${studentName}, ${sid}, ${score}, ${questions.length}, ${JSON.stringify(answers)}, ${aiComment}, ${durationMs})
       RETURNING id
     `) as { id: number }[]
     return NextResponse.json({

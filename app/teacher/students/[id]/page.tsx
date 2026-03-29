@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { TeacherResultDetailModal } from '@/components/TeacherResultDetailModal'
+import { TeacherRowMenu } from '@/components/TeacherRowMenu'
 import s from './student.module.css'
 
 type Attempt = {
@@ -28,6 +30,7 @@ export default function StudentDetailPage() {
     className: string
   } | null>(null)
   const [attempts, setAttempts] = useState<Attempt[]>([])
+  const [modal, setModal] = useState<{ resultId: number; examId: number } | null>(null)
 
   useEffect(() => {
     fetch(`/api/students/${id}/results`, { credentials: 'include' })
@@ -107,6 +110,7 @@ export default function StudentDetailPage() {
                   <th>Điểm</th>
                   <th>Tỉ lệ</th>
                   <th>Nộp lúc</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -126,6 +130,20 @@ export default function StudentDetailPage() {
                     <td className={s.date}>
                       {new Date(a.submitted_at).toLocaleString('vi-VN')}
                     </td>
+                    <td className={s.actions}>
+                      <TeacherRowMenu
+                        items={[
+                          {
+                            label: 'Xem đề & đáp án',
+                            onClick: () => setModal({ resultId: a.id, examId: a.exam_id }),
+                          },
+                          {
+                            label: 'Bảng xếp hạng đề',
+                            onClick: () => router.push(`/teacher/stats/${a.exam_id}`),
+                          },
+                        ]}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -133,6 +151,16 @@ export default function StudentDetailPage() {
           </div>
         )}
       </div>
+      {modal && student && (
+        <TeacherResultDetailModal
+          key={`${modal.resultId}-${modal.examId}`}
+          open
+          onClose={() => setModal(null)}
+          studentId={student.id}
+          examId={modal.examId}
+          initialResultId={modal.resultId}
+        />
+      )}
     </div>
   )
 }

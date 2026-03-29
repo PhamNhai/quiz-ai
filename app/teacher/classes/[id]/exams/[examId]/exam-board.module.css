@@ -99,6 +99,12 @@
   font-size: 13px;
   color: var(--accent);
 }
+.thAct,
+.tdAct {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
 .center {
   display: flex;
   justify-content: center;

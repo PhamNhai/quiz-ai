@@ -120,3 +120,8 @@
   color: var(--text-3);
   white-space: nowrap;
 }
+.actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}

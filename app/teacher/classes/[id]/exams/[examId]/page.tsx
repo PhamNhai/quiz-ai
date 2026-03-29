@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
+import { TeacherResultDetailModal } from '@/components/TeacherResultDetailModal'
+import { TeacherRowMenu } from '@/components/TeacherRowMenu'
 import s from './exam-board.module.css'
 
 type Row = {
@@ -23,6 +25,7 @@ export default function ClassExamBoardPage() {
   const [exam, setExam] = useState<Exam | null>(null)
   const [className, setClassName] = useState('')
   const [rows, setRows] = useState<Row[]>([])
+  const [modal, setModal] = useState<{ resultId: number; studentId: number } | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -121,11 +124,21 @@ export default function ClassExamBoardPage() {
                     : '—'}
                 </td>
                 <td>{r.percentage != null ? `${r.percentage}%` : '—'}</td>
-                <td>
-                  {r.result_id != null && (
-                    <Link href={`/teacher/students/${r.student_id}`} className={s.mini}>
-                      Chi tiết HS
-                    </Link>
+                <td className={s.tdAct}>
+                  {r.result_id != null && exam && (
+                    <TeacherRowMenu
+                      items={[
+                        {
+                          label: 'Xem đề & đáp án',
+                          onClick: () =>
+                            setModal({ resultId: r.result_id!, studentId: r.student_id }),
+                        },
+                        {
+                          label: 'Hồ sơ học sinh',
+                          onClick: () => router.push(`/teacher/students/${r.student_id}`),
+                        },
+                      ]}
+                    />
                   )}
                 </td>
               </tr>
@@ -133,6 +146,16 @@ export default function ClassExamBoardPage() {
           </tbody>
         </table>
       </div>
+      {modal && exam && (
+        <TeacherResultDetailModal
+          key={`${modal.resultId}-${exam.id}`}
+          open
+          onClose={() => setModal(null)}
+          studentId={modal.studentId}
+          examId={exam.id}
+          initialResultId={modal.resultId}
+        />
+      )}
     </div>
   )
 }
