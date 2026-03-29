@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { TEACHER_SESSION_COOKIE, verifySessionToken } from '@/lib/teacher-auth'
+import { TEACHER_SESSION_COOKIE } from '@/lib/teacher-auth'
+import { verifyStaffSessionToken } from '@/lib/staff-auth'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -13,8 +14,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith('/teacher')) {
-    const ok = await verifySessionToken(request.cookies.get(TEACHER_SESSION_COOKIE)?.value)
-    if (!ok) {
+    const session = await verifyStaffSessionToken(request.cookies.get(TEACHER_SESSION_COOKIE)?.value)
+    if (!session) {
       const url = request.nextUrl.clone()
       url.pathname = '/teacher/login'
       url.searchParams.set('next', pathname + request.nextUrl.search)

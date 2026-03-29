@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { getExamIfAllowed } from '@/lib/exam-access'
+import { canManageExams, forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
 import { repairLatexAfterJsonParse } from '@/lib/gemini'
 
-export async function GET(_req: NextRequest, { params }: { params: { resultId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { resultId: string } }) {
   try {
-    if (!(await isTeacherRequest(_req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
+    if (!canManageExams(session)) return forbidden()
     await initDB()
     const rid = Number(params.resultId)
     if (Number.isNaN(rid)) return NextResponse.json({ error: 'ID không hợp lệ' }, { status: 400 })
@@ -43,6 +45,8 @@ export async function GET(_req: NextRequest, { params }: { params: { resultId: s
     if (!rows.length) return NextResponse.json({ error: 'Không tìm thấy bài nộp' }, { status: 404 })
 
     const r = rows[0]
+    const allowed = await getExamIfAllowed(session, r.exam_id)
+    if (!allowed) return forbidden()
     const questionsRaw = r.content as unknown
     const questions = Array.isArray(questionsRaw) ? questionsRaw : []
     const answersArr = (Array.isArray(r.answers) ? r.answers : []) as (string | null)[]

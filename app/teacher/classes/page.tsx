@@ -2,15 +2,18 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useStaffMe } from '../useStaffMe'
 import s from './classes.module.css'
 
 type Cls = { id: number; name: string; student_count: number; created_at: string }
 
 export default function ClassesPage() {
   const router = useRouter()
+  const me = useStaffMe()
   const [list, setList] = useState<Cls[]>([])
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
+  const canCreateClass = me?.role === 'admin' || me?.role === 'school_manager'
 
   async function load() {
     const res = await fetch('/api/classes', { credentials: 'include' })
@@ -48,17 +51,19 @@ export default function ClassesPage() {
       <h1 className={s.h1}>Lớp học</h1>
       <p className={s.lead}>Tạo lớp, thêm học sinh (tên + mật khẩu), nhập/xuất CSV.</p>
 
-      <form onSubmit={create} className={s.createRow}>
-        <input
-          className={s.input}
-          placeholder="Tên lớp mới"
-          value={name}
-          onChange={e => setName(e.target.value)}
-        />
-        <button type="submit" className={s.btn}>
-          Tạo lớp
-        </button>
-      </form>
+      {canCreateClass && (
+        <form onSubmit={create} className={s.createRow}>
+          <input
+            className={s.input}
+            placeholder="Tên lớp mới"
+            value={name}
+            onChange={e => setName(e.target.value)}
+          />
+          <button type="submit" className={s.btn}>
+            Tạo lớp
+          </button>
+        </form>
+      )}
 
       {loading ? (
         <div className={s.center}>

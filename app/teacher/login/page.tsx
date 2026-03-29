@@ -26,7 +26,13 @@ function Form() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Đăng nhập thất bại')
-      router.replace(next.startsWith('/teacher') ? next : '/teacher')
+      const role = data.role as string | undefined
+      if (role === 'school_manager') {
+        router.replace('/teacher/classes')
+      } else {
+        const dest = next.startsWith('/teacher') ? next : '/teacher'
+        router.replace(dest)
+      }
       router.refresh()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Lỗi')

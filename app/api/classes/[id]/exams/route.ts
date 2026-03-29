@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 /** Đề đã gán cho lớp + số HS trong lớp đã nộp bài */
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!(await isTeacherRequest(_req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
     await initDB()
     const classId = Number(params.id)
     if (Number.isNaN(classId)) return NextResponse.json({ error: 'ID lớp không hợp lệ' }, { status: 400 })
@@ -14,6 +14,16 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     const classSize = (await sql`
       SELECT COUNT(*)::int AS c FROM class_students WHERE class_id = ${classId}
     `) as { c: number }[]
+
+    if (session.role === 'school_manager') {
+      return NextResponse.json({
+        classSize: classSize[0]?.c ?? 0,
+        exams: [],
+      })
+    }
+
+    const examCreatorFilter =
+      session.role === 'teacher' ? sql`AND e.created_by = ${session.userId}` : sql``
 
     const rows = (await sql`
       SELECT e.id, e.exam_code, e.topic, e.subject, e.grade, e.created_at,
@@ -24,6 +34,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
         ) AS done_count
       FROM exams e
       INNER JOIN exam_classes ec ON ec.exam_id = e.id AND ec.class_id = ${classId}
+      WHERE 1=1 ${examCreatorFilter}
       ORDER BY e.created_at DESC
     `) as Array<{
       id: number

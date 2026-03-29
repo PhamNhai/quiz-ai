@@ -1,16 +1,21 @@
 import { randomBytes, scryptSync, timingSafeEqual } from 'crypto'
 
-/** Hash mật khẩu học sinh (salt riêng mỗi bản ghi). */
-export function hashPassword(plain: string): { salt: string; hash: string } {
+/** scrypt salt:hash — không cần bcrypt. */
+export function hashPassword(plain: string): string {
   const salt = randomBytes(16).toString('hex')
-  const hash = scryptSync(plain, salt, 32).toString('hex')
-  return { salt, hash }
+  const buf = scryptSync(plain, salt, 64)
+  return `${salt}:${buf.toString('hex')}`
 }
 
-export function verifyPassword(plain: string, salt: string, hash: string): boolean {
+export function verifyPassword(plain: string, stored: string): boolean {
+  const [salt, hash] = stored.split(':')
+  if (!salt || !hash || hash.length < 32) return false
   try {
-    const h = scryptSync(plain, salt, 32).toString('hex')
-    return timingSafeEqual(Buffer.from(h, 'hex'), Buffer.from(hash, 'hex'))
+    const buf = scryptSync(plain, salt, 64)
+    const a = Buffer.from(hash, 'hex')
+    const b = buf
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
   } catch {
     return false
   }

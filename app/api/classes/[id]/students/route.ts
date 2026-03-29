@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { getStaffSession, unauthorized } from '@/lib/staff-auth'
 import { hashPassword } from '@/lib/password'
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!(await isTeacherRequest(req))) return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    if (!(await getStaffSession(req))) return unauthorized()
     await initDB()
     const rows = (await sql`
       SELECT id, display_name, note, created_at
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 /** Thêm một học sinh: { displayName, password, note } */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!(await isTeacherRequest(req))) return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    if (!(await getStaffSession(req))) return unauthorized()
     const body = await req.json()
     const displayName = String(body.displayName ?? '').trim()
     const password = String(body.password ?? '')
@@ -29,10 +29,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!displayName || !password)
       return NextResponse.json({ error: 'Cần tên và mật khẩu' }, { status: 400 })
     await initDB()
-    const { salt, hash } = hashPassword(password)
+    const stored = hashPassword(password)
     const rows = (await sql`
       INSERT INTO class_students (class_id, display_name, password_salt, password_hash, note)
-      VALUES (${params.id}, ${displayName}, ${salt}, ${hash}, ${note})
+      VALUES (${params.id}, ${displayName}, '', ${stored}, ${note})
       RETURNING id, display_name, note, created_at
     `) as Array<{ id: number; display_name: string; note: string; created_at: Date | string }>
     return NextResponse.json(rows[0])

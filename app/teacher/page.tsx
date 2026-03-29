@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { GRADES_ALL, SUBJECTS_ALL } from '@/lib/curriculum'
+import { ClassMultiSelect } from '@/components/ClassMultiSelect'
 import { TeacherRowMenu } from '@/components/TeacherRowMenu'
 import s from './manage/manage.module.css'
 
@@ -62,6 +63,16 @@ export default function TeacherDashboardPage() {
     ;(async () => {
       setLoading(true)
       try {
+        const rMe = await fetch('/api/auth/me', { credentials: 'include' })
+        if (rMe.status === 401) {
+          router.replace('/teacher/login?next=/teacher')
+          return
+        }
+        const me = await rMe.json()
+        if (me?.role === 'school_manager') {
+          router.replace('/teacher/classes')
+          return
+        }
         const [rExams, rCls] = await Promise.all([
           fetch('/api/exams', { credentials: 'include' }),
           fetch('/api/classes', { credentials: 'include' }),
@@ -240,28 +251,12 @@ export default function TeacherDashboardPage() {
                 </Link>
               </p>
             ) : (
-              <>
-                <label className={s.modalHint} htmlFor="assign-class-multi">
-                  Chọn một hoặc nhiều lớp (giữ Ctrl / ⌘ khi bấm để chọn thêm):
-                </label>
-                <select
-                  id="assign-class-multi"
-                  className={s.selectMulti}
-                  multiple
-                  size={Math.min(10, Math.max(4, allClasses.length))}
-                  value={Array.from(assignIds).map(String)}
-                  onChange={e => {
-                    const ids = Array.from(e.target.selectedOptions, o => Number(o.value))
-                    setAssignIds(new Set(ids))
-                  }}
-                >
-                  {allClasses.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </>
+              <ClassMultiSelect
+                classes={allClasses.map(c => ({ id: c.id, name: c.name }))}
+                selectedIds={Array.from(assignIds)}
+                onChange={ids => setAssignIds(new Set(ids))}
+                placeholder="Chọn một hoặc nhiều lớp…"
+              />
             )}
             <div className={s.modalActions}>
               <button type="button" className={s.btnMini} onClick={() => setAssignExam(null)}>
@@ -401,6 +396,10 @@ export default function TeacherDashboardPage() {
                           { label: 'Copy link làm bài', onClick: () => void copyLink(e) },
                           { label: 'QR làm bài', onClick: () => void openQr(e) },
                           { label: 'Kết quả / xếp hạng', onClick: () => router.push(`/teacher/stats/${e.id}`) },
+                          {
+                            label: 'Xem & sửa đề',
+                            onClick: () => router.push(`/teacher/exams/${e.id}/edit`),
+                          },
                           { label: 'Gán lớp', onClick: () => openAssign(e) },
                           { label: 'Xóa đề', onClick: () => void deleteExam(e.id) },
                         ]}

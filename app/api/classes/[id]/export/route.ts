@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { getStaffSession, unauthorized } from '@/lib/staff-auth'
 import { toExcelCsv } from '@/lib/csv-excel'
 
 /** CSV: tên + cột mật khẩu để trống (đặt lại khi nhập) — định dạng mở bằng Excel (sep `;`). */
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!(await isTeacherRequest(req))) return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    if (!(await getStaffSession(req))) return unauthorized()
     await initDB()
     const rows = (await sql`
       SELECT display_name, note FROM class_students WHERE class_id = ${params.id} ORDER BY display_name

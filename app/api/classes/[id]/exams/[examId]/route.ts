@@ -1,35 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { getExamIfAllowed } from '@/lib/exam-access'
+import { canManageExams, forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 /**
  * Bảng điểm theo đề trong lớp: mỗi học sinh — đã làm hay chưa, điểm nếu có.
  */
-export async function GET(_req: NextRequest, { params }: { params: { id: string; examId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string; examId: string } }) {
   try {
-    if (!(await isTeacherRequest(_req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
+    if (!canManageExams(session)) return forbidden()
     await initDB()
     const classId = Number(params.id)
     const examId = Number(params.examId)
     if (Number.isNaN(classId) || Number.isNaN(examId))
       return NextResponse.json({ error: 'ID không hợp lệ' }, { status: 400 })
 
+    const allowed = await getExamIfAllowed(session, examId)
+    if (!allowed) return forbidden()
+
     const link = (await sql`
       SELECT 1 FROM exam_classes WHERE class_id = ${classId} AND exam_id = ${examId}
     `) as unknown[]
     if (!link.length) return NextResponse.json({ error: 'Đề không gán cho lớp này' }, { status: 404 })
-
-    const examRows = (await sql`
-      SELECT id, exam_code, topic, subject, grade FROM exams WHERE id = ${examId}
-    `) as Array<{
-      id: number
-      exam_code: string
-      topic: string
-      subject: string
-      grade: string
-    }>
-    if (!examRows.length) return NextResponse.json({ error: 'Không tìm thấy đề' }, { status: 404 })
 
     const students = (await sql`
       SELECT
@@ -64,7 +58,13 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string;
     }>
 
     return NextResponse.json({
-      exam: examRows[0],
+      exam: {
+        id: allowed.id,
+        exam_code: allowed.exam_code,
+        topic: allowed.topic,
+        subject: allowed.subject,
+        grade: allowed.grade,
+      },
       students,
     })
   } catch (e: unknown) {

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { parseCsvLine } from '@/lib/csv-excel'
+import { useStaffMe } from '../../useStaffMe'
 import d from './class-detail.module.css'
 
 type Student = { id: number; display_name: string; note: string; created_at: string }
@@ -30,6 +31,8 @@ type ClassExamRow = {
 export default function ClassDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const me = useStaffMe()
+  const hideExamUi = me?.role === 'school_manager'
   const [students, setStudents] = useState<Student[]>([])
   const [activity, setActivity] = useState<Act[]>([])
   const [className, setClassName] = useState('')
@@ -352,45 +355,47 @@ export default function ClassDetailPage() {
         )}
       </section>
 
-      <section className={d.section}>
-        <h2 className={d.h2}>Hoạt động làm bài</h2>
-        {activity.length === 0 ? (
-          <p className={d.hint}>Chưa có bài nào được nộp (theo học sinh đã xác thực).</p>
-        ) : (
-          <div className={d.tableWrap}>
-            <table className={d.table}>
-              <thead>
-                <tr>
-                  <th>Học sinh</th>
-                  <th>Mã đề</th>
-                  <th>Chủ đề</th>
-                  <th>Lần làm</th>
-                  <th>Lần cuối</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activity.map((a, i) => (
-                  <tr key={i}>
-                    <td>
-                      <Link href={`/teacher/students/${a.student_id}`} className={d.nameLink}>
-                        {a.display_name}
-                      </Link>
-                    </td>
-                    <td>
-                      <Link href={`/teacher/classes/${id}/exams/${a.exam_id}`} className={d.examCodeLink}>
-                        {a.exam_code}
-                      </Link>
-                    </td>
-                    <td>{a.topic}</td>
-                    <td>{a.attempts}</td>
-                    <td>{new Date(a.last_at).toLocaleString('vi-VN')}</td>
+      {!hideExamUi && (
+        <section className={d.section}>
+          <h2 className={d.h2}>Hoạt động làm bài</h2>
+          {activity.length === 0 ? (
+            <p className={d.hint}>Chưa có bài nào được nộp (theo học sinh đã xác thực).</p>
+          ) : (
+            <div className={d.tableWrap}>
+              <table className={d.table}>
+                <thead>
+                  <tr>
+                    <th>Học sinh</th>
+                    <th>Mã đề</th>
+                    <th>Chủ đề</th>
+                    <th>Lần làm</th>
+                    <th>Lần cuối</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                </thead>
+                <tbody>
+                  {activity.map((a, i) => (
+                    <tr key={i}>
+                      <td>
+                        <Link href={`/teacher/students/${a.student_id}`} className={d.nameLink}>
+                          {a.display_name}
+                        </Link>
+                      </td>
+                      <td>
+                        <Link href={`/teacher/classes/${id}/exams/${a.exam_id}`} className={d.examCodeLink}>
+                          {a.exam_code}
+                        </Link>
+                      </td>
+                      <td>{a.topic}</td>
+                      <td>{a.attempts}</td>
+                      <td>{new Date(a.last_at).toLocaleString('vi-VN')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   )
 }

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { getStaffSession, unauthorized } from '@/lib/staff-auth'
 import { hashPassword } from '@/lib/password'
 
 /** POST JSON { rows: [{ name, password, note? }] } */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!(await isTeacherRequest(req))) return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    if (!(await getStaffSession(req))) return unauthorized()
     const { rows } = await req.json()
     if (!Array.isArray(rows) || rows.length === 0)
       return NextResponse.json({ error: 'Danh sách trống' }, { status: 400 })
@@ -24,10 +24,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         continue
       }
       try {
-        const { salt, hash } = hashPassword(pw)
+        const stored = hashPassword(pw)
         await sql`
           INSERT INTO class_students (class_id, display_name, password_salt, password_hash, note)
-          VALUES (${params.id}, ${name}, ${salt}, ${hash}, ${note})
+          VALUES (${params.id}, ${name}, '', ${stored}, ${note})
         `
         ok++
       } catch (e: any) {

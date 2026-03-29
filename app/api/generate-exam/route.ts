@@ -8,12 +8,13 @@ import {
   isGeminiQuotaError,
   normalizeExamQuestions,
 } from '@/lib/gemini'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { canManageExams, forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 export async function POST(req: NextRequest) {
   try {
-    if (!(await isTeacherRequest(req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
+    if (!canManageExams(session)) return forbidden()
     const { subject, grade, topic, subtopic, count, difficulty, extra } = await req.json()
     if (!subject || !grade || !topic || !count)
       return NextResponse.json({ error: 'Thiếu thông tin bắt buộc' }, { status: 400 })

@@ -45,6 +45,10 @@ export default function StatsPage() {
           router.replace(`/teacher/login?next=${encodeURIComponent(`/teacher/stats/${id}`)}`)
           return null
         }
+        if (r.status === 403) {
+          router.replace('/teacher/classes')
+          return null
+        }
         return r.json()
       })
       .then(d => { if (d) setResults(Array.isArray(d) ? d : []) })

@@ -38,6 +38,10 @@ export default function ClassExamBoardPage() {
           router.replace(`/teacher/login?next=/teacher/classes/${id}/exams/${examId}`)
           return
         }
+        if (rBoard.status === 403) {
+          router.replace('/teacher/classes')
+          return
+        }
         const c = await rClass.json().catch(() => ({}))
         if (c.name) setClassName(c.name)
         const d = await rBoard.json()

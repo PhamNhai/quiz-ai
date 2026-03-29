@@ -2,10 +2,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { MathText } from '@/components/MathText'
+import { ExamEditorForm } from '@/components/ExamEditorForm'
+import {
+  normalizeExamQuestionsList,
+  questionsToJsonPayload,
+  validateQuestionsForSave,
+  type ExamQuestion,
+} from '@/lib/exam-question'
 import s from './review.module.css'
-
-type Question = { question: string; options: Record<string, string>; answer: string; explanation: string }
 
 type DraftMeta = {
   subject: string
@@ -20,12 +24,12 @@ type DraftMeta = {
   durationMinutes?: number | ''
 }
 
-type Draft = { questions: Question[]; meta: DraftMeta }
+type Draft = { questions: unknown[]; meta: DraftMeta }
 
 export default function ReviewPage() {
   const router = useRouter()
   const [draft, setDraft] = useState<Draft | null>(null)
-  const [questions, setQuestions] = useState<Question[]>([])
+  const [questions, setQuestions] = useState<ExamQuestion[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -36,10 +40,11 @@ export default function ReviewPage() {
       return
     }
     try {
-      const parsed = JSON.parse(raw) as Draft | (Draft & { examId?: number })
+      const parsed = JSON.parse(raw) as Draft
       if (parsed.meta && Array.isArray(parsed.questions)) {
-        setDraft(parsed as Draft)
-        setQuestions(parsed.questions)
+        setDraft(parsed)
+        const list = normalizeExamQuestionsList(parsed.questions)
+        setQuestions(list.length > 0 ? list : [])
         return
       }
       router.replace('/teacher')
@@ -48,12 +53,13 @@ export default function ReviewPage() {
     }
   }, [router])
 
-  function setAnswer(i: number, ans: string) {
-    setQuestions(prev => prev.map((q, qi) => (qi === i ? { ...q, answer: ans } : q)))
-  }
-
   async function handleSave() {
     if (!draft) return
+    const err = validateQuestionsForSave(questions)
+    if (err) {
+      setError(err)
+      return
+    }
     setSaving(true)
     setError('')
     try {
@@ -62,7 +68,7 @@ export default function ReviewPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          questions,
+          questions: questionsToJsonPayload(questions),
           meta: {
             ...draft.meta,
             classIds: draft.meta.classIds ?? [],
@@ -108,10 +114,10 @@ export default function ReviewPage() {
       </nav>
       <div className={s.container}>
         <div className={s.pageHeader}>
-          <h1>Kiểm tra và xác nhận đáp án</h1>
+          <h1>Kiểm tra và xác nhận đề</h1>
           <p>
-            AI đã tạo nội dung câu hỏi (chưa lưu vào hệ thống). Xem lại từng câu, chỉnh đáp án nếu cần, rồi bấm{' '}
-            <strong>Lưu đề</strong> để đề xuất hiện trong tổng quan.
+            AI đã tạo bản nháp (chưa lưu DB). Bạn có thể <strong>sửa nội dung câu, phương án, đáp án</strong>,{' '}
+            <strong>thêm / xóa câu</strong>, rồi bấm <strong>Lưu đề</strong>.
           </p>
         </div>
 
@@ -140,40 +146,12 @@ export default function ReviewPage() {
           </div>
         </div>
 
-        <div className={s.questionList}>
-          {questions.map((q, i) => (
-            <div key={i} className={s.qCard}>
-              <div className={s.qHeader}>
-                <span className={s.qNum}>Câu {i + 1}</span>
-              </div>
-              <MathText text={q.question} as="p" className={s.qText} />
-              <div className={s.options}>
-                {Object.entries(q.options).map(([k, v]) => (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => setAnswer(i, k)}
-                    className={`${s.opt} ${q.answer === k ? s.optCorrect : ''}`}
-                  >
-                    <span className={s.optKey}>{k}</span>
-                    <MathText text={v} as="span" className={s.optVal} />
-                    {q.answer === k && <span className={s.optTag}>✓ Đáp án đúng</span>}
-                  </button>
-                ))}
-              </div>
-              {q.explanation && (
-                <div className={s.explanation}>
-                  💡 <MathText text={q.explanation} as="span" />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <ExamEditorForm questions={questions} onChange={setQuestions} />
 
-        {error && <div className={s.error}>{error}</div>}
+        {error && <div className={s.error} style={{ marginTop: 16 }}>{error}</div>}
 
         <div className={s.footerBar}>
-          <p className={s.footerHint}>Click vào đáp án để thay đổi. Đáp án đúng hiển thị màu xanh.</p>
+          <p className={s.footerHint}>Kiểm tra kỹ trước khi lưu — sau khi lưu, đề xuất hiện ở Tổng quan.</p>
           <button type="button" onClick={handleSave} disabled={saving} className={s.btnSave}>
             {saving ? (
               <>

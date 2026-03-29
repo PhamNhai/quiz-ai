@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { canManageExams, forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 /** Ai làm đề gì, bao nhiêu lần (theo học sinh trong lớp) */
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!(await isTeacherRequest(req))) return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
+    if (session.role === 'school_manager') return NextResponse.json([])
+    if (!canManageExams(session)) return forbidden()
     await initDB()
+    const examFilter =
+      session.role === 'teacher' ? sql`AND e.created_by = ${session.userId}` : sql``
+
     const rows = (await sql`
       SELECT
         cs.id AS student_id,
@@ -19,6 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       FROM results r
       JOIN class_students cs ON cs.id = r.student_id AND cs.class_id = ${params.id}
       JOIN exams e ON e.id = r.exam_id
+      WHERE 1=1 ${examFilter}
       GROUP BY cs.id, cs.display_name, e.id, e.exam_code, e.topic
       ORDER BY cs.display_name, e.exam_code
     `) as Array<{

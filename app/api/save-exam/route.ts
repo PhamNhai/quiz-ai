@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB, generateUniqueCode } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { canManageExams, forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 type Meta = {
   subject: string
@@ -18,8 +18,9 @@ type Meta = {
 /** Lưu đề vào DB lần đầu (sau khi giáo viên duyệt ở màn review). */
 export async function POST(req: NextRequest) {
   try {
-    if (!(await isTeacherRequest(req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
+    if (!canManageExams(session)) return forbidden()
     const { questions, meta } = (await req.json()) as {
       questions: unknown
       meta: Meta
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     const finalCode = await generateUniqueCode(baseCode)
 
     const rows = (await sql`
-      INSERT INTO exams (exam_code, topic, subject, grade, difficulty, allow_retake, content, duration_minutes)
+      INSERT INTO exams (exam_code, topic, subject, grade, difficulty, allow_retake, content, duration_minutes, created_by)
       VALUES (
         ${finalCode},
         ${topicDb},
@@ -56,7 +57,8 @@ export async function POST(req: NextRequest) {
         ${m.difficulty},
         ${m.allowRetake ?? true},
         ${JSON.stringify(questions)},
-        ${dur}
+        ${dur},
+        ${session.userId}
       )
       RETURNING id
     `) as { id: number }[]

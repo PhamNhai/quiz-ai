@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { getStaffSession, unauthorized } from '@/lib/staff-auth'
 import { hashPassword } from '@/lib/password'
 
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: { id: string; sid: string } }
 ) {
   try {
-    if (!(await isTeacherRequest(req))) return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    if (!(await getStaffSession(req))) return unauthorized()
     const body = await req.json()
     const displayName = body.displayName != null ? String(body.displayName).trim() : undefined
     const password = body.password != null ? String(body.password) : undefined
@@ -27,9 +27,9 @@ export async function PATCH(
       await sql`UPDATE class_students SET note = ${note} WHERE id = ${params.sid}`
     }
     if (password !== undefined && password.length > 0) {
-      const { salt, hash } = hashPassword(password)
+      const stored = hashPassword(password)
       await sql`
-        UPDATE class_students SET password_salt = ${salt}, password_hash = ${hash} WHERE id = ${params.sid}
+        UPDATE class_students SET password_salt = '', password_hash = ${stored} WHERE id = ${params.sid}
       `
     }
 
@@ -50,7 +50,7 @@ export async function DELETE(
   { params }: { params: { id: string; sid: string } }
 ) {
   try {
-    if (!(await isTeacherRequest(req))) return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    if (!(await getStaffSession(req))) return unauthorized()
     await initDB()
     await sql`DELETE FROM class_students WHERE id = ${params.sid} AND class_id = ${params.id}`
     return NextResponse.json({ ok: true })

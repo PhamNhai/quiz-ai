@@ -53,9 +53,15 @@ export async function POST(req: NextRequest) {
       class_id: number
     }>
 
-    const match = students.find(
-      s => s.display_name.trim().toLowerCase() === studentName.toLowerCase() && verifyPassword(plainPw, s.password_salt, s.password_hash)
-    )
+    const match = students.find(s => {
+      if (s.display_name.trim().toLowerCase() !== studentName.toLowerCase()) return false
+      const stored = s.password_hash.includes(':')
+        ? s.password_hash
+        : s.password_salt
+          ? `${s.password_salt}:${s.password_hash}`
+          : s.password_hash
+      return verifyPassword(plainPw, stored)
+    })
 
     if (!match)
       return NextResponse.json({ error: 'Đề này không dành cho bạn.' }, { status: 403 })

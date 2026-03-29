@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { getExamIfAllowed } from '@/lib/exam-access'
+import { canManageExams, forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 /** Các lần nộp của học sinh cho một đề (mới nhất trước). */
-export async function GET(_req: NextRequest, { params }: { params: { id: string; examId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string; examId: string } }) {
   try {
-    if (!(await isTeacherRequest(_req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
+    if (!canManageExams(session)) return forbidden()
     await initDB()
     const sid = Number(params.id)
     const examId = Number(params.examId)
     if (Number.isNaN(sid) || Number.isNaN(examId))
       return NextResponse.json({ error: 'ID không hợp lệ' }, { status: 400 })
+
+    const allowedExam = await getExamIfAllowed(session, examId)
+    if (!allowedExam) return forbidden()
 
     const st = (await sql`SELECT id FROM class_students WHERE id = ${sid}`) as { id: number }[]
     if (!st.length) return NextResponse.json({ error: 'Không tìm thấy học sinh' }, { status: 404 })

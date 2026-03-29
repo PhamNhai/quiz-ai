@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { canAccessExamRow } from '@/lib/exam-access'
+import { forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 export async function GET(req: NextRequest) {
   try {
-    if (!(await isTeacherRequest(req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
     await initDB()
-    const rows = (await sql`
+    if (session.role === 'school_manager') return NextResponse.json([])
+
+    const rows =
+      session.role === 'admin'
+        ? ((await sql`
       SELECT e.id, e.exam_code, e.topic, e.subject, e.grade, e.difficulty, e.allow_retake, e.created_at,
         COUNT(r.id)::int AS result_count,
         ROUND(AVG(r.score / r.total_questions * 100))::int AS avg_score,
@@ -21,32 +26,69 @@ export async function GET(req: NextRequest) {
       GROUP BY e.id
       ORDER BY e.created_at DESC
     `) as Array<{
-      id: number
-      exam_code: string
-      topic: string
-      subject: string
-      grade: string
-      difficulty: string
-      allow_retake: boolean
-      created_at: Date | string
-      result_count: number
-      avg_score: number | null
-      classes: { id: number; name: string }[] | null
-    }>
+            id: number
+            exam_code: string
+            topic: string
+            subject: string
+            grade: string
+            difficulty: string
+            allow_retake: boolean
+            created_at: Date | string
+            result_count: number
+            avg_score: number | null
+            classes: { id: number; name: string }[] | null
+          }>)
+        : ((await sql`
+      SELECT e.id, e.exam_code, e.topic, e.subject, e.grade, e.difficulty, e.allow_retake, e.created_at,
+        COUNT(r.id)::int AS result_count,
+        ROUND(AVG(r.score / r.total_questions * 100))::int AS avg_score,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', c.id, 'name', c.name) ORDER BY c.name)
+           FROM exam_classes ec JOIN classes c ON c.id = ec.class_id WHERE ec.exam_id = e.id),
+          '[]'::json
+        ) AS classes
+      FROM exams e
+      LEFT JOIN results r ON r.exam_id = e.id
+      WHERE e.created_by = ${session.userId}
+      GROUP BY e.id
+      ORDER BY e.created_at DESC
+    `) as Array<{
+            id: number
+            exam_code: string
+            topic: string
+            subject: string
+            grade: string
+            difficulty: string
+            allow_retake: boolean
+            created_at: Date | string
+            result_count: number
+            avg_score: number | null
+            classes: { id: number; name: string }[] | null
+          }>)
+
     return NextResponse.json(rows)
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Lỗi'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
 
 export async function DELETE(req: NextRequest) {
   try {
-    if (!(await isTeacherRequest(req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
     const { id } = await req.json()
+    await initDB()
+    const ex = (await sql`SELECT id, created_by FROM exams WHERE id = ${id}`) as Array<{
+      id: number
+      created_by: number | null
+    }>
+    if (!ex.length) return NextResponse.json({ error: 'Không tìm thấy' }, { status: 404 })
+    if (!canAccessExamRow(session, ex[0].created_by)) return forbidden()
     await sql`DELETE FROM exams WHERE id = ${id}`
     return NextResponse.json({ success: true })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Lỗi'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

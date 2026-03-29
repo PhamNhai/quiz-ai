@@ -54,8 +54,5 @@
 .modalHint{font-size:12px;color:var(--text-3);word-break:break-all;margin-bottom:12px}
 .modalActions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 .btnClose{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;cursor:pointer}
-.selectMulti{width:100%;min-height:140px;padding:8px 10px;margin:8px 0;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:14px;background:var(--surface);color:var(--text);outline:none;cursor:pointer}
-.selectMulti:focus{border-color:var(--accent)}
-.selectMulti option{padding:6px}
 .tdActions{width:1%;white-space:nowrap;text-align:right;vertical-align:middle}
 @media(max-width:720px){.tableWrap{font-size:12px}.topic{max-width:120px}}

@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { getExamIfAllowed } from '@/lib/exam-access'
+import { forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 /** Gán đề với các lớp (thay toàn bộ danh sách). Body: { classIds: number[] } */
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!(await isTeacherRequest(req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
     await initDB()
     const examId = Number(params.id)
     if (Number.isNaN(examId)) return NextResponse.json({ error: 'ID không hợp lệ' }, { status: 400 })
+    const allowed = await getExamIfAllowed(session, examId)
+    if (!allowed) return forbidden()
     const { classIds } = await req.json()
     const ids = Array.isArray(classIds)
       ? classIds.map((x: unknown) => Number(x)).filter(n => !Number.isNaN(n) && n > 0)

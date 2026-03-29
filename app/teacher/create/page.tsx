@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useStaffMe } from '../useStaffMe'
+import { ClassMultiSelect } from '@/components/ClassMultiSelect'
 import { GRADES_ALL, SUBJECTS_ALL, getSubtopics } from '@/lib/curriculum'
 import s from '../teacher.module.css'
 
@@ -16,6 +18,7 @@ type Cls = { id: number; name: string; student_count: number }
 
 export default function CreateExamPage() {
   const router = useRouter()
+  const me = useStaffMe()
   const [classes, setClasses] = useState<Cls[]>([])
   const [classIds, setClassIds] = useState<number[]>([])
   const [subject, setSubject] = useState('')
@@ -33,11 +36,15 @@ export default function CreateExamPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (me?.role === 'school_manager') {
+      router.replace('/teacher/classes')
+      return
+    }
     fetch('/api/classes', { credentials: 'include' })
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setClasses(d) })
       .catch(() => {})
-  }, [])
+  }, [me?.role, router])
 
   const finalCount = count || (customCount ? parseInt(customCount) : 0)
   const canSubmit = subject && grade && topic.trim() && finalCount >= 5
@@ -116,27 +123,16 @@ export default function CreateExamPage() {
           {classes.length === 0 ? (
             <p className={s.fieldHint}>Chưa có lớp — vào &quot;Lớp học&quot; để tạo.</p>
           ) : (
-            <>
-              <p className={s.fieldHint}>
-                Chọn một hoặc nhiều lớp (giữ Ctrl / ⌘ khi bấm để chọn thêm).
-              </p>
-              <select
-                className={s.selectMulti}
-                multiple
-                size={Math.min(8, Math.max(4, classes.length))}
-                value={classIds.map(String)}
-                onChange={e => {
-                  const ids = Array.from(e.target.selectedOptions, o => Number(o.value))
-                  setClassIds(ids)
-                }}
-              >
-                {classes.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.student_count} HS)
-                  </option>
-                ))}
-              </select>
-            </>
+            <ClassMultiSelect
+              classes={classes.map(c => ({
+                id: c.id,
+                name: c.name,
+                suffix: `(${c.student_count} HS)`,
+              }))}
+              selectedIds={classIds}
+              onChange={setClassIds}
+              placeholder="Chọn một hoặc nhiều lớp…"
+            />
           )}
         </div>
 

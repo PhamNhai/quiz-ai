@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless'
+import { hashPassword } from '@/lib/password'
 
 type Sql = ReturnType<typeof neon>
 
@@ -15,6 +16,7 @@ export type ExamRow = {
   created_at: Date | string
   /** Phút làm bài; null = không giới hạn */
   duration_minutes?: number | null
+  created_by?: number | null
 }
 
 let sqlInstance: Sql | null = null
@@ -50,6 +52,33 @@ export async function initDB() {
   await sql`ALTER TABLE exams ADD COLUMN IF NOT EXISTS allow_retake BOOLEAN DEFAULT TRUE`
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS exams_exam_code_key ON exams (exam_code)`
   await sql`ALTER TABLE exams ADD COLUMN IF NOT EXISTS duration_minutes INTEGER`
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS staff_users (
+      id            SERIAL PRIMARY KEY,
+      username      TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      role          TEXT NOT NULL CHECK (role IN ('admin', 'school_manager', 'teacher')),
+      display_name  TEXT DEFAULT '',
+      created_at    TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
+  await sql`ALTER TABLE exams ADD COLUMN IF NOT EXISTS created_by INTEGER`
+  await sql`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'exams_created_by_fkey'
+      ) THEN
+        ALTER TABLE exams
+          ADD CONSTRAINT exams_created_by_fkey
+          FOREIGN KEY (created_by) REFERENCES staff_users(id) ON DELETE SET NULL;
+      END IF;
+    END
+    $$;
+  `
+
+  await seedStaffUsers(getSql())
   await sql`
     CREATE TABLE IF NOT EXISTS results (
       id              SERIAL PRIMARY KEY,
@@ -105,6 +134,37 @@ export async function initDB() {
     END
     $$;
   `
+}
+
+async function seedStaffUsers(sql: Sql) {
+  const adminRows = (await sql`SELECT id FROM staff_users WHERE username = 'adminer'`) as { id: number }[]
+  if (!adminRows.length) {
+    const h = hashPassword('Thptdongtho1@')
+    await sql`
+      INSERT INTO staff_users (username, password_hash, role, display_name)
+      VALUES ('adminer', ${h}, 'admin', 'Quản trị')
+    `
+  }
+  const envU = (process.env.TEACHER_USERNAME ?? '').trim()
+  const envP = (process.env.TEACHER_PASSWORD ?? '').trim()
+  if (envU && envP && envU !== 'adminer') {
+    const ex = (await sql`SELECT id FROM staff_users WHERE username = ${envU}`) as { id: number }[]
+    if (!ex.length) {
+      await sql`
+        INSERT INTO staff_users (username, password_hash, role, display_name)
+        VALUES (${envU}, ${hashPassword(envP)}, 'teacher', 'Giáo viên')
+      `
+    }
+  }
+  const staffSeed = (await sql`SELECT id FROM staff_users WHERE username = 'dongthostaff'`) as {
+    id: number
+  }[]
+  if (!staffSeed.length) {
+    await sql`
+      INSERT INTO staff_users (username, password_hash, role, display_name)
+      VALUES ('dongthostaff', ${hashPassword('staff01@')}, 'school_manager', 'Quản lý trường')
+    `
+  }
 }
 
 /** Mã đề duy nhất: nếu trùng thì thêm hậu tố -2, -3, ... */

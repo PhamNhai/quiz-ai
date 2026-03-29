@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sql, { initDB } from '@/lib/db'
-import { isTeacherRequest } from '@/lib/teacher-auth'
+import { canAccessExamRow } from '@/lib/exam-access'
+import { getStaffSession, unauthorized } from '@/lib/staff-auth'
 
 /** Lịch sử làm bài của học sinh (class_students.id). */
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!(await isTeacherRequest(_req)))
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 })
+    const session = await getStaffSession(req)
+    if (!session) return unauthorized()
     await initDB()
     const sid = Number(params.id)
     if (Number.isNaN(sid)) return NextResponse.json({ error: 'ID không hợp lệ' }, { status: 400 })
@@ -19,8 +20,16 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     const cls = (await sql`SELECT name FROM classes WHERE id = ${st[0].class_id}`) as { name: string }[]
     const className = cls[0]?.name ?? ''
 
+    if (session.role === 'school_manager') {
+      return NextResponse.json({
+        student: { id: st[0].id, displayName: st[0].display_name, classId: st[0].class_id, className },
+        attempts: [],
+      })
+    }
+
     const rows = (await sql`
       SELECT r.id, r.exam_id, e.exam_code, e.topic, e.subject, e.grade,
+        e.created_by,
         r.score, r.total_questions,
         ROUND((r.score / r.total_questions * 100))::int AS percentage,
         r.submitted_at
@@ -35,15 +44,21 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       topic: string
       subject: string
       grade: string
+      created_by: number | null
       score: number
       total_questions: number
       percentage: number
       submitted_at: Date | string
     }>
 
+    const filtered = rows.filter(row =>
+      canAccessExamRow(session, row.created_by ?? null)
+    )
+    const attempts = filtered.map(({ created_by: _c, ...rest }) => rest)
+
     return NextResponse.json({
       student: { id: st[0].id, displayName: st[0].display_name, classId: st[0].class_id, className },
-      attempts: rows,
+      attempts,
     })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Lỗi'
