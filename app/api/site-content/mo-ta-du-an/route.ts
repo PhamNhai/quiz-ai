@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { getMoTaDuAnPayload, parseMoTaPayload, saveMoTaDuAnPayload } from '@/lib/mo-ta-du-an-data'
 import { canManageStaffAccounts, forbidden, getStaffSession, unauthorized } from '@/lib/staff-auth'
@@ -33,6 +34,7 @@ async function handleSave(req: NextRequest) {
     )
   }
   await saveMoTaDuAnPayload(parsed)
+  revalidatePath('/mo-ta-du-an')
   return NextResponse.json({ ok: true })
 }
 

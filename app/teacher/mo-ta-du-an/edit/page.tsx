@@ -148,7 +148,7 @@ export default function EditMoTaDuAnPage() {
         setErr(typeof j.error === 'string' ? j.error : 'Không lưu được')
         return
       }
-      router.push('/mo-ta-du-an')
+      await router.push('/mo-ta-du-an')
       router.refresh()
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Lỗi mạng')
