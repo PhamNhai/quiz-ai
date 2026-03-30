@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import MoTaDiagrams from '@/components/MoTaDiagrams'
 import { useStaffMe } from '../teacher/useStaffMe'
 import type { MoTaPayload } from '@/lib/mo-ta-du-an-content'
 import { canAccessStaffManagementPage } from '@/lib/staff-nav-access'
@@ -44,6 +45,7 @@ export default function MoTaDuAnView({ data }: { data: MoTaPayload }) {
             {sec.paragraphs.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
+            {sec.id === 'so-do-luong' ? <MoTaDiagrams /> : null}
             {sec.bullets && sec.bullets.length > 0 ? (
               <ul className={s.list}>
                 {sec.bullets.map((b, i) => (

@@ -13,7 +13,8 @@ export type MoTaSection = {
 
 export const MO_TA_META = {
   title: 'Bản mô tả dự án QuizAI',
-  subtitle: 'Ứng dụng web hỗ trợ soạn đề trắc nghiệm và theo dõi kết quả học tập có hỗ trợ trí tuệ nhân tạo',
+  subtitle:
+    'Ứng dụng web soạn đề trắc nghiệm, làm bài online, tích hợp AI (Gemini / tương thích OpenAI). Tài liệu mô tả mục tiêu, quy trình, pháp lý & nguồn mở, mô hình AI, prompt, luồng API và sơ đồ luồng dữ liệu.',
 }
 
 /** Đoạn chân trang trang công khai (có thể sửa trong /teacher/mo-ta-du-an/edit). */
@@ -80,17 +81,53 @@ export const MO_TA_SECTIONS: MoTaSection[] = [
     ],
   },
   {
-    id: 'cong-cu-ai',
-    title: '6. Công cụ AI sử dụng (diễn giải đơn giản)',
+    id: 'mo-hinh-ai-va-du-lieu',
+    title: '6. Mô hình AI, nguồn dữ liệu huấn luyện & cách triển khai',
     paragraphs: [
-      'Hệ thống dùng các mô hình ngôn ngữ lớn (LLM) thông qua giao diện lập trình do bên cung cấp AI cấp phép (ví dụ Google Gemini; có thể cấu hình thêm dịch vụ tương thích OpenAI khi cần dự phòng).',
-      'Hai chỗ chính AI tham gia: (1) Sinh bộ câu hỏi trắc nghiệm có bốn phương án, đáp án và hướng dẫn giải thích ngắn — phù hợp chương trình phổ thông Việt Nam theo thông tin giáo viên nhập; (2) Sau khi học sinh nộp bài, AI đọc điểm số và danh sách câu sai (ở mức tóm tắt) để viết một đoạn nhận xét động viên và gợi ý ôn tập — không thay thế hoàn toàn nhận xét của giáo viên.',
-      'Nếu hết hạn mức gọi AI hoặc lỗi kết nối, đề vẫn có thể được soạn tay; điểm số vẫn được lưu, phần nhận xét tự động có thể tạm thiếu hoặc thông báo rõ ràng cho người dùng.',
+      'Ứng dụng không tự huấn luyện (fine-tune) mô hình trên bài làm hay danh sách học sinh của trường. Dữ liệu đề thi sau khi giáo viên lưu và kết quả học sinh được lưu trong cơ sở dữ liệu do đơn vị triển khai quản lý (PostgreSQL), phục vụ hiển thị và thống kê — không được mô tả ở đây như “dữ liệu huấn luyện” cho một mô hình riêng của trường.',
+      'Mô hình ngôn ngữ được gọi qua API của nhà cung cấp thương mại / đám mây: mặc định Google Gemini (ví dụ biến thể gemini-2.5-flash, có thể đổi bằng biến môi trường GEMINI_MODEL). Có thể bật chế độ tương thích OpenAI (HTTP Chat Completions) qua OPENAI_COMPAT_* để dùng các dịch vụ hợp pháp khác (Groq, OpenRouter, Together, Ollama qua URL, v.v.).',
+      'Các mô hình này đã được nhà phát triển huấn luyện trước trên tập dữ liệu tổng hợp theo chính sách của từng nhà cung cấp (xem tài liệu Google AI / đối tác tương ứng). QuizAI chỉ gửi prompt ngắn (môn, khối, chủ đề, số câu; hoặc điểm số và tóm tắt câu sai) qua HTTPS có khóa API — không công bố thêm “bộ dữ liệu huấn luyện nội bộ” vì không tồn tại trong phạm vi dự án.',
+    ],
+    bullets: [
+      'Biến môi trường: GEMINI_API_KEY, GEMINI_MODEL; tùy chọn AI_PROVIDER, OPENAI_COMPAT_API_KEY, OPENAI_COMPAT_BASE_URL, OPENAI_COMPAT_MODEL.',
+      'Hệ thống hướng dẫn (system) cố định: trợ lý giáo dục, giữ dấu tiếng Việt — xem mục sơ đồ & prompt mẫu.',
+    ],
+  },
+  {
+    id: 'phap-ly-nguon-mo',
+    title: '7. Nguyên tắc pháp lý, nguồn mở & bản quyền',
+    paragraphs: [
+      'Ưu tiên dùng thư viện và framework có giấy phép rõ ràng, phù hợp nhúng trong sản phẩm: Next.js (MIT), React (MIT), KaTeX (MIT), thư viện đọc Excel (Apache-2.0), mã QR (MIT), driver cơ sở dữ liệu Neon serverless — người triển khai cần giữ file LICENSE / attribution theo từng gói trong node_modules khi phân phối.',
+      'Nội dung đề do AI sinh ra phải được giáo viên rà soát trước khi sử dụng; trách nhiệm pháp lý đối với đề thi thuộc đơn vị sử dụng. Khóa API AI do đơn vị chủ quản cấp phát, tuân thủ điều khoản dịch vụ của Google / nhà cung cấp tương thích.',
+    ],
+    bullets: [
+      'Font chữ (Be Vietnam Pro) qua Google Fonts — tuân bản quyền font và CSP khi triển khai production.',
+      'Sơ đồ minh họa trên trang này do dự án tự vẽ (SVG), không lấy ảnh có bản quyền hạn chế.',
+    ],
+  },
+  {
+    id: 'quy-trinh-ai-chi-tiet',
+    title: '8. Quy trình xử lý AI: prompt, API, xử lý thông tin',
+    paragraphs: [
+      'Tạo đề: giáo viên gửi biểu mẫu (môn, khối, chủ đề, độ khó, số câu…) tới API nội bộ POST /api/generate-exam. Máy chủ dựng prompt bằng hàm buildExamPrompt (lib/gemini.ts), kèm system instruction cố định; gọi Gemini JSON mode (schema mảng câu hỏi) hoặc fallback phân tích văn bản; chuẩn hóa cấu trúc câu hỏi (normalizeExamQuestions). Kết quả trả về trình duyệt — chưa ghi DB; giáo viên duyệt ở màn hình review rồi POST /api/save-exam mới lưu.',
+      'Nộp bài: học sinh gửi đáp án tới POST /api/submit-result. Máy chủ nạp đề từ DB, so khớp đáp án để tính điểm cục bộ (không cần AI). Sau đó buildCommentPrompt (điểm, tên, gợi ý câu sai rút gọn) gọi callGemini để sinh đoạn nhận xét tiếng Việt; nếu hết quota API, vẫn lưu điểm và có thông báo thay cho nhận xét AI.',
+      'Luồng HTTPS: trình duyệt ↔ máy chủ Next.js (cookie phiên giáo viên; API học sinh thường không cần đăng nhập tài khoản Google). Máy chủ ↔ nhà cung cấp AI chỉ qua API key trên biến môi trường, không nhúng khóa vào mã nguồn client.',
+    ],
+    bullets: [
+      'Endpoint chính liên quan AI: POST /api/generate-exam, POST /api/submit-result (gọi AI trong route).',
+      'Nhiệt độ (temperature) sinh đề ~0.45–0.55 tùy nhánh; nhận xét sau bài tương tự trong callGemini.',
+    ],
+  },
+  {
+    id: 'so-do-luong',
+    title: '9. Sơ đồ luồng dữ liệu & ví dụ prompt',
+    paragraphs: [
+      'Phần dưới hiển thị sơ đồ SVG (trên trang web) và trích đoạn prompt mẫu; bản Word có thể rút gọn — nên xem trực tiếp trang này để có hình đầy đủ.',
     ],
   },
   {
     id: 'huong-phat-trien',
-    title: '7. Hướng phát triển',
+    title: '10. Hướng phát triển',
     paragraphs: [
       'Mở rộng ngân hàng dạng câu hỏi (ví dụ nhiều đáp án đúng, câu ghép đôi) và bộ lọc theo chuẩn đánh giá năng lực.',
       'Báo cáo chi tiết hơn cho từng học sinh theo thời gian: tiến bộ theo chủ đề, so sánh lớp.',
@@ -112,4 +149,24 @@ export function getDefaultMoTaPayload(): MoTaPayload {
     })),
     footerNote: MO_TA_FOOTER_NOTE,
   }
+}
+
+/**
+ * Ghép mục đã lưu với bản mặc định: thứ tự theo bản mặc định; nội dung theo id nếu đã có trong DB;
+ * thêm mục mới từ mặc định nếu thiếu; giữ thêm mục lạ (id không có trong mặc định) ở cuối.
+ */
+export function mergeMoTaWithDefaults(db: MoTaPayload): MoTaPayload {
+  const def = getDefaultMoTaPayload()
+  /** Mục id cũ đổi tên — bỏ để tránh trùng với mục mới. */
+  const dbSections = db.sections.filter(s => s.id !== 'cong-cu-ai')
+  const byId = new Map(dbSections.map(s => [s.id, s]))
+  const merged: MoTaSection[] = []
+  for (const s of def.sections) {
+    merged.push(byId.get(s.id) ?? s)
+  }
+  const defIds = new Set(def.sections.map(s => s.id))
+  for (const s of dbSections) {
+    if (!defIds.has(s.id)) merged.push(s)
+  }
+  return { ...db, sections: merged }
 }

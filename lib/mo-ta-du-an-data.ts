@@ -1,12 +1,14 @@
 import sql, { initDB } from '@/lib/db'
 import type { MoTaPayload, MoTaSection } from '@/lib/mo-ta-du-an-content'
-import { getDefaultMoTaPayload } from '@/lib/mo-ta-du-an-content'
+import { getDefaultMoTaPayload, mergeMoTaWithDefaults } from '@/lib/mo-ta-du-an-content'
 
 const SLUG = 'mo_ta_du_an'
 
 function isNonEmptyString(x: unknown, max: number): x is string {
   return typeof x === 'string' && x.trim().length > 0 && x.length <= max
 }
+
+const META_MAX = 20000
 
 function parseSection(raw: unknown): MoTaSection | null {
   if (!raw || typeof raw !== 'object') return null
@@ -35,21 +37,23 @@ export function parseMoTaPayload(raw: unknown): MoTaPayload | null {
   if (!meta || typeof meta !== 'object') return null
   const title = meta.title
   const subtitle = meta.subtitle
-  if (!isNonEmptyString(title, 500) || !isNonEmptyString(subtitle, 2000)) return null
+  if (!isNonEmptyString(title, META_MAX) || !isNonEmptyString(subtitle, META_MAX)) return null
   const sectionsRaw = o.sections
-  if (!Array.isArray(sectionsRaw) || sectionsRaw.length === 0 || sectionsRaw.length > 30) return null
+  if (!Array.isArray(sectionsRaw) || sectionsRaw.length === 0 || sectionsRaw.length > 45) return null
   const sections: MoTaSection[] = []
   for (const s of sectionsRaw) {
     const sec = parseSection(s)
     if (!sec) return null
     sections.push(sec)
   }
-  const footer = o.footerNote
-  if (typeof footer !== 'string' || footer.length > 12000) return null
+  const footerRaw = o.footerNote
+  if (footerRaw != null && typeof footerRaw !== 'string') return null
+  const footerStr = typeof footerRaw === 'string' ? footerRaw : ''
+  if (footerStr.length > 12000) return null
   return {
     meta: { title: title.trim(), subtitle: subtitle.trim() },
     sections,
-    footerNote: footer,
+    footerNote: footerStr,
   }
 }
 
@@ -68,15 +72,17 @@ export async function getMoTaDuAnPayload(): Promise<MoTaPayload> {
     }
   }
   const parsed = parseMoTaPayload(raw)
-  return parsed ?? getDefaultMoTaPayload()
+  if (!parsed) return getDefaultMoTaPayload()
+  return mergeMoTaWithDefaults(parsed)
 }
 
 export async function saveMoTaDuAnPayload(payload: MoTaPayload): Promise<void> {
   await initDB()
-  const json = JSON.stringify(payload)
+  /** Chuỗi JSON + ép ::jsonb — gửi thẳng text vào cột jsonb dễ bị driver/Postgres từ chối. */
+  const jsonStr = JSON.stringify(payload)
   await sql`
     INSERT INTO site_pages (slug, payload, updated_at)
-    VALUES (${SLUG}, ${json}, NOW())
+    VALUES (${SLUG}, ${jsonStr}::jsonb, NOW())
     ON CONFLICT (slug) DO UPDATE SET
       payload = EXCLUDED.payload,
       updated_at = NOW()

@@ -41,6 +41,12 @@ li{margin:0.2em 0;}
     for (const p of sec.paragraphs) {
       body += `<p>${escapeHtml(p)}</p>`
     }
+    if (sec.id === 'so-do-luong') {
+      body += `<p><em>Sơ đồ SVG và prompt đầy đủ: xem trang web /mo-ta-du-an (mục 9).</em></p>`
+      body += `<pre style="font-size:10pt;background:#f5f5f5;padding:8px;border:1px solid #ddd;">Data Flow (ASCII):
+Browser → POST /api/generate-exam hoặc /submit-result → Next.js → HTTPS → Gemini / OpenAI-compat → JSON → (đề: review) / (bài: lưu results + ai_comment)
+System prompt (ý): Trợ lý giáo dục, giữ dấu tiếng Việt — xem lib/gemini.ts</pre>`
+    }
     if (sec.bullets?.length) {
       body += '<ul>'
       for (const b of sec.bullets) {

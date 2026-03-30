@@ -17,9 +17,6 @@ export default function Home() {
           <Link href="/teacher" className={styles.btnPrimary}>Khu vực giáo viên <span>→</span></Link>
           <Link href="/exam" className={styles.btnSecondary}>Làm bài thi</Link>
         </div>
-        <p className={styles.docTeaser}>
-          <Link href="/mo-ta-du-an">Mô tả chi tiết dự án (mục tiêu, quy trình, AI, hướng phát triển) — dùng cho báo cáo / cuộc thi</Link>
-        </p>
       </section>
       <section className={styles.features}>
         {[

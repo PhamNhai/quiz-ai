@@ -25,6 +25,10 @@ function payloadToRows(p: MoTaPayload): Row[] {
   }))
 }
 
+function normalizeNewlines(t: string): string {
+  return t.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+}
+
 function rowsToPayload(
   title: string,
   subtitle: string,
@@ -33,7 +37,7 @@ function rowsToPayload(
 ): MoTaPayload | null {
   const sections: MoTaSection[] = []
   for (const r of rows) {
-    const paragraphs = r.paragraphText
+    const paragraphs = normalizeNewlines(r.paragraphText)
       .split(/\n\n+/)
       .map(x => x.trim())
       .filter(Boolean)
@@ -134,7 +138,7 @@ export default function EditMoTaDuAnPage() {
     setSaving(true)
     try {
       const res = await fetch('/api/site-content/mo-ta-du-an', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload),
@@ -146,6 +150,8 @@ export default function EditMoTaDuAnPage() {
       }
       router.push('/mo-ta-du-an')
       router.refresh()
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Lỗi mạng')
     } finally {
       setSaving(false)
     }
