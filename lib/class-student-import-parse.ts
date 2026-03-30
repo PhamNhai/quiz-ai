@@ -14,7 +14,17 @@ function normHeader(s: string): string {
 
 const NAME_ALIASES = ['name', 'ten', 'ho ten', 'hoten', 'displayname', 'display_name', 'họ tên', 'tên']
 const PASS_ALIASES = ['password', 'mat khau', 'matkhau', 'pass', 'mk', 'mật khẩu']
-const NOTE_ALIASES = ['note', 'ghi chu', 'ghichu', 'ghi chú', 'remark', 'chu thich']
+const NOTE_ALIASES = [
+  'note',
+  'ghi chu',
+  'ghichu',
+  'ghi chú',
+  'remark',
+  'chu thich',
+  'ma lop',
+  'malop',
+  'mã lớp',
+]
 
 function findColIndex(headers: string[], aliases: string[]): number {
   const n = headers.map(h => normHeader(String(h ?? '')))

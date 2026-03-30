@@ -245,3 +245,96 @@
   color: var(--text-3);
   font-size: 14px;
 }
+.importBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.importModal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem 1.25rem;
+  max-width: min(920px, 96vw);
+  width: 100%;
+  max-height: min(85vh, 720px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+.importModalTitle {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.importModalHint {
+  font-size: 12px;
+  color: var(--text-3);
+  margin: 0 0 10px;
+}
+.importTableScroll {
+  overflow: auto;
+  flex: 1;
+  min-height: 120px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.importTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.importTable th,
+.importTable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+.importTable th {
+  background: var(--surface2);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--text-3);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.importCellInput {
+  width: 100%;
+  min-width: 120px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.importModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  flex-shrink: 0;
+}
+.btnModalGhost {
+  padding: 8px 16px;
+  font-size: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.btnModalPrimary {
+  padding: 8px 18px;
+  font-size: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: pointer;
+}

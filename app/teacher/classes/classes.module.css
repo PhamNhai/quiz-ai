@@ -56,6 +56,17 @@
   margin-bottom: 10px;
   box-sizing: border-box;
 }
+.textareaFull {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-size: 14px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: inherit;
+}
 .hint {
   font-size: 12px;
   color: var(--text-3);

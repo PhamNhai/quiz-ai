@@ -5,19 +5,26 @@ import { useRouter } from 'next/navigation'
 import { useStaffMe } from '../useStaffMe'
 import s from './classes.module.css'
 
-type Cls = { id: number; name: string; code: string; student_count: number; created_at: string }
+type Cls = {
+  id: number
+  name: string
+  code: string
+  note: string
+  student_count: number
+  created_at: string
+}
 
 export default function ClassesPage() {
   const router = useRouter()
   const me = useStaffMe()
   const [list, setList] = useState<Cls[]>([])
   const [name, setName] = useState('')
-  const [code, setCode] = useState('')
+  const [classNote, setClassNote] = useState('')
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
   const [edit, setEdit] = useState<Cls | null>(null)
   const [editName, setEditName] = useState('')
-  const [editCode, setEditCode] = useState('')
+  const [editNote, setEditNote] = useState('')
   const canManageClass = me?.role === 'admin' || me?.role === 'school_manager'
 
   async function load() {
@@ -43,12 +50,12 @@ export default function ClassesPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ name: n, code: code.trim() || undefined }),
+      body: JSON.stringify({ name: n, note: classNote.trim() }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
       setName('')
-      setCode('')
+      setClassNote('')
       load()
       setToast('Đã tạo lớp')
       setTimeout(() => setToast(null), 2400)
@@ -61,13 +68,12 @@ export default function ClassesPage() {
   function openEdit(c: Cls) {
     setEdit(c)
     setEditName(c.name)
-    setEditCode(c.code)
+    setEditNote(c.note ?? '')
   }
 
   async function saveEdit() {
     if (!edit) return
     const n = editName.trim()
-    const c = editCode.trim()
     if (!n) {
       setToast('Tên lớp không được để trống')
       setTimeout(() => setToast(null), 2800)
@@ -77,7 +83,7 @@ export default function ClassesPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ name: n, code: c }),
+      body: JSON.stringify({ name: n, note: editNote.trim() }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
@@ -123,15 +129,14 @@ export default function ClassesPage() {
               value={editName}
               onChange={e => setEditName(e.target.value)}
             />
-            <label className={s.lbl}>Mã lớp (duy nhất)</label>
-            <input
-              className={s.inputFull}
-              value={editCode}
-              onChange={e => setEditCode(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
+            <label className={s.lbl}>Ghi chú lớp</label>
+            <textarea
+              className={s.textareaFull}
+              value={editNote}
+              onChange={e => setEditNote(e.target.value)}
+              rows={3}
+              placeholder="Tùy chọn"
             />
-            <p className={s.hint}>Chữ thường, số, gạch — ví dụ: 10a1, lop-chuyen</p>
             <div className={s.modalActions}>
               <button type="button" className={s.btnGhost} onClick={() => setEdit(null)}>
                 Hủy
@@ -145,7 +150,7 @@ export default function ClassesPage() {
       )}
 
       <h1 className={s.h1}>Lớp học</h1>
-      <p className={s.lead}>Tạo lớp (tên + mã lớp duy nhất), thêm học sinh, nhập/xuất CSV.</p>
+      <p className={s.lead}>Tạo lớp (tên + ghi chú tùy chọn), thêm học sinh, nhập/xuất CSV.</p>
 
       {canManageClass && (
         <form onSubmit={create} className={s.createBlock}>
@@ -158,17 +163,14 @@ export default function ClassesPage() {
             />
             <input
               className={s.input}
-              placeholder="Mã lớp (tùy chọn — để trống sẽ tự tạo)"
-              value={code}
-              onChange={e => setCode(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
+              placeholder="Ghi chú lớp (tùy chọn)"
+              value={classNote}
+              onChange={e => setClassNote(e.target.value)}
             />
           </div>
           <button type="submit" className={s.btn}>
             Tạo lớp
           </button>
-          <p className={s.formHint}>Mã lớp: 2–64 ký tự, chữ thường, số, gạch (không trùng).</p>
         </form>
       )}
 
@@ -185,7 +187,8 @@ export default function ClassesPage() {
               <Link href={`/teacher/classes/${c.id}`} className={s.card}>
                 <span className={s.cname}>{c.name}</span>
                 <span className={s.meta}>
-                  <code className={s.codeTag}>{c.code}</code> · {c.student_count} học sinh
+                  {c.note ? `${c.note} · ` : ''}
+                  {c.student_count} học sinh
                 </span>
                 <span className={s.arrow}>→</span>
               </Link>

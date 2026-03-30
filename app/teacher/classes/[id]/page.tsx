@@ -49,6 +49,7 @@ export default function ClassDetailPage() {
   const [editPw, setEditPw] = useState('')
   const [editNote, setEditNote] = useState('')
   const [csvText, setCsvText] = useState('')
+  const [importDraft, setImportDraft] = useState<StudentImportRow[] | null>(null)
   const [studentSearch, setStudentSearch] = useState('')
   const [classExams, setClassExams] = useState<ClassExamRow[]>([])
   const [classSize, setClassSize] = useState(0)
@@ -153,7 +154,21 @@ export default function ClassDetailPage() {
     }
     alert(`Nhập: ${j.imported} dòng. ${j.errors?.length ? j.errors.join('\n') : ''}`)
     setCsvText('')
+    setImportDraft(null)
     load()
+  }
+
+  function openImportDraft(rows: StudentImportRow[]) {
+    setImportDraft(rows.map(r => ({ ...r })))
+  }
+
+  function updateImportDraftRow(i: number, field: keyof StudentImportRow, v: string) {
+    setImportDraft(prev => {
+      if (!prev) return null
+      const next = [...prev]
+      next[i] = { ...next[i]!, [field]: v }
+      return next
+    })
   }
 
   async function importCsv() {
@@ -162,7 +177,7 @@ export default function ClassDetailPage() {
       alert('Cần CSV: dòng đầu name,password,note (phân cách , hoặc ;)')
       return
     }
-    await postImportRows(rows)
+    openImportDraft(rows)
   }
 
   async function onImportFile(ev: React.ChangeEvent<HTMLInputElement>) {
@@ -186,7 +201,7 @@ export default function ClassDetailPage() {
         alert('Không đọc được dòng dữ liệu nào (cần dòng tiêu đề + ít nhất một dòng học sinh).')
         return
       }
-      await postImportRows(rows)
+      openImportDraft(rows)
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Không đọc được file')
     }
@@ -194,6 +209,78 @@ export default function ClassDetailPage() {
 
   return (
     <div className={d.page}>
+      {importDraft && (
+        <div
+          className={d.importBackdrop}
+          role="presentation"
+          onClick={() => setImportDraft(null)}
+        >
+          <div
+            className={d.importModal}
+            role="dialog"
+            aria-label="Kiểm tra dữ liệu nhập"
+            onClick={ev => ev.stopPropagation()}
+          >
+            <h2 className={d.importModalTitle}>Kiểm tra trước khi nhập</h2>
+            <p className={d.importModalHint}>
+              Sửa tên, mật khẩu, ghi chú nếu cần. Chỉ khi ấn Lưu mới gửi lên hệ thống.
+            </p>
+            <div className={d.importTableScroll}>
+              <table className={d.importTable}>
+                <thead>
+                  <tr>
+                    <th>Tên</th>
+                    <th>Mật khẩu</th>
+                    <th>Ghi chú</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {importDraft.map((row, i) => (
+                    <tr key={i}>
+                      <td>
+                        <input
+                          className={d.importCellInput}
+                          value={row.name}
+                          onChange={e => updateImportDraftRow(i, 'name', e.target.value)}
+                          autoComplete="off"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className={d.importCellInput}
+                          type="password"
+                          value={row.password}
+                          onChange={e => updateImportDraftRow(i, 'password', e.target.value)}
+                          autoComplete="new-password"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className={d.importCellInput}
+                          value={row.note}
+                          onChange={e => updateImportDraftRow(i, 'note', e.target.value)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className={d.importModalActions}>
+              <button type="button" className={d.btnModalGhost} onClick={() => setImportDraft(null)}>
+                Hủy
+              </button>
+              <button
+                type="button"
+                className={d.btnModalPrimary}
+                onClick={() => void postImportRows(importDraft)}
+              >
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Link href="/teacher/classes" className={d.back}>
         ← Các lớp
       </Link>

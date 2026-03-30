@@ -126,6 +126,7 @@ export async function initDB() {
     WHERE code IS NULL OR TRIM(code) = ''
   `
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS classes_code_key ON classes (code)`
+  await sql`ALTER TABLE classes ADD COLUMN IF NOT EXISTS note TEXT DEFAULT ''`
 
   await sql`
     DO $$
