@@ -169,7 +169,7 @@ async function seedStaffUsers(sql: Sql) {
   if (!staffSeed.length) {
     await sql`
       INSERT INTO staff_users (username, password_hash, role, display_name)
-      VALUES ('dongthostaff', ${hashPassword('staff01@')}, 'school_manager', 'Quản lý trường')
+      VALUES ('dongthostaff', ${hashPassword('staff01@')}, 'school_manager', 'Phụ trách lớp')
     `
   }
 }

@@ -118,7 +118,7 @@ export function canManageClasses(s: StaffSession): boolean {
   return s.role === 'admin' || s.role === 'school_manager'
 }
 
-/** Quản lý tài khoản nhân sự — chỉ tài khoản adminer. */
+/** Tạo tài khoản phụ (giáo viên / phụ lớp) — chỉ adminer. */
 export function canManageStaffAccounts(s: StaffSession): boolean {
   return s.role === 'admin' && s.username === 'adminer'
 }

@@ -85,13 +85,15 @@ export default function StaffPage() {
   return (
     <div className={s.page}>
       <div className={s.dashTop}>
-        <h1 className={s.h1}>Tài khoản nhân sự</h1>
+        <h1 className={s.h1}>Tạo tài khoản phụ</h1>
         <Link href="/teacher/classes" className={s.link}>
           ← Lớp học
         </Link>
       </div>
       <div className={s.container}>
-        <p className={s.lead}>Chỉ admin tạo tài khoản giáo viên hoặc quản lý trường.</p>
+        <p className={s.lead}>
+          Tài khoản phụ chỉ để làm đề hoặc lớp — kiểu chân sai vặt, không nằm trong nhóm quản trị hệ thống.
+        </p>
 
         <form onSubmit={onSubmit} className={s.filters} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
           <input
@@ -113,7 +115,7 @@ export default function StaffPage() {
           />
           <select className={s.select} value={role} onChange={e => setRole(e.target.value as 'teacher' | 'school_manager')}>
             <option value="teacher">Giáo viên</option>
-            <option value="school_manager">Quản lý trường</option>
+            <option value="school_manager">Phụ trách lớp (không làm đề)</option>
           </select>
           <input
             className={s.search}
@@ -140,7 +142,13 @@ export default function StaffPage() {
               {rows.map(r => (
                 <tr key={r.id}>
                   <td className={s.code}>{r.username}</td>
-                  <td>{r.role === 'school_manager' ? 'Quản lý trường' : r.role === 'admin' ? 'Admin' : 'Giáo viên'}</td>
+                  <td>
+                    {r.role === 'school_manager'
+                      ? 'Phụ trách lớp'
+                      : r.role === 'admin'
+                        ? 'Chủ hệ thống'
+                        : 'Giáo viên'}
+                  </td>
                   <td>{r.display_name || '—'}</td>
                 </tr>
               ))}

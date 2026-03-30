@@ -5,6 +5,7 @@ import {
   canAccessClassesList,
   canAccessStaffManagementPage,
   canAccessTeacherExamArea,
+  staffRoleSubtitle,
 } from '@/lib/staff-nav-access'
 import { useStaffMe } from './useStaffMe'
 import s from './teacher-shell.module.css'
@@ -28,7 +29,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const navReady = me !== undefined
   const showExamNav = navReady && me != null && canAccessTeacherExamArea(me)
   const showClassNav = navReady && me != null && canAccessClassesList(me)
-  const showStaffNav = navReady && me != null && canAccessStaffManagementPage(me)
+  const showStaffMgmtLink = navReady && me != null && canAccessStaffManagementPage(me)
 
   const brandHref =
     navReady && me != null && !canAccessTeacherExamArea(me) ? '/teacher/classes' : '/teacher'
@@ -65,6 +66,9 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             </div>
             <div className={s.userMeta}>
               <span className={s.userName}>{userLabel}</span>
+              {me ? (
+                <span className={s.userRole}>{staffRoleSubtitle(me)}</span>
+              ) : null}
               <Link href="/" className={s.homeLink}>
                 Trang chủ
               </Link>
@@ -112,20 +116,15 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                   </div>
                 ))}
 
-              {showStaffNav && (
-                <div className={s.group}>
-                  <div className={s.groupLabel}>Quản trị</div>
-                  <div className={s.subNav}>
-                    <Link href="/teacher/staff" className={staff ? s.active : ''}>
-                      Tài khoản nhân sự
-                    </Link>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </nav>
         <div className={s.asideFooter}>
+          {showStaffMgmtLink ? (
+            <Link href="/teacher/staff" className={`${s.staffMgmtLink} ${staff ? s.staffMgmtLinkActive : ''}`}>
+              Tạo tài khoản phụ
+            </Link>
+          ) : null}
           <button type="button" className={s.logoutBtn} onClick={() => void logout()}>
             <svg className={s.logoutIcon} width="18" height="18" viewBox="0 0 24 24" aria-hidden>
               <path
