@@ -83,6 +83,12 @@
   padding: 0 0.5rem;
   flex: 1;
 }
+.navLoading {
+  margin: 0;
+  padding: 0.5rem 0.85rem;
+  font-size: 13px;
+  color: var(--text-3);
+}
 .group {
   display: flex;
   flex-direction: column;

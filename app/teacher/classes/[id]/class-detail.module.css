@@ -75,6 +75,40 @@
   border-radius: var(--radius);
   margin-right: 12px;
 }
+.filePick {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+.fileInput {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+.filePickBtn {
+  display: inline-block;
+  padding: 9px 16px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+.filePick:hover .filePickBtn {
+  opacity: 0.92;
+}
+.importActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-top: 4px;
+}
 .link {
   font-size: 13px;
   color: var(--accent);

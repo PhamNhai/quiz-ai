@@ -2,7 +2,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { parseCsvLine } from '@/lib/csv-excel'
+import {
+  parseStudentRowsFromCsvText,
+  parseStudentRowsFromExcelBuffer,
+  type StudentImportRow,
+} from '@/lib/class-student-import-parse'
 import { useStaffMe } from '../../useStaffMe'
 import d from './class-detail.module.css'
 
@@ -135,25 +139,7 @@ export default function ClassDetailPage() {
     load()
   }
 
-  async function importCsv() {
-    const lines = csvText.trim().split(/\r?\n/).filter(Boolean)
-    if (lines.length < 2) {
-      alert('Cần CSV: dòng đầu name,password,note (phân cách , hoặc ;)')
-      return
-    }
-    let i0 = 0
-    if (lines[0]!.toLowerCase().startsWith('sep=')) i0 = 1
-    const headerLine = (lines[i0] ?? '').toLowerCase()
-    const sep = headerLine.includes(';') ? ';' : ','
-    const rows: { name: string; password: string; note: string }[] = []
-    for (let i = i0 + 1; i < lines.length; i++) {
-      const parts = parseCsvLine(lines[i]!, sep)
-      rows.push({
-        name: (parts[0] ?? '').trim(),
-        password: (parts[1] ?? '').trim(),
-        note: (parts[2] ?? '').trim(),
-      })
-    }
+  async function postImportRows(rows: StudentImportRow[]) {
     const res = await fetch(`/api/classes/${id}/import`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -161,9 +147,49 @@ export default function ClassDetailPage() {
       body: JSON.stringify({ rows }),
     })
     const j = await res.json()
+    if (!res.ok) {
+      alert(j.error ?? 'Lỗi nhập')
+      return
+    }
     alert(`Nhập: ${j.imported} dòng. ${j.errors?.length ? j.errors.join('\n') : ''}`)
     setCsvText('')
     load()
+  }
+
+  async function importCsv() {
+    const rows = parseStudentRowsFromCsvText(csvText)
+    if (rows.length === 0) {
+      alert('Cần CSV: dòng đầu name,password,note (phân cách , hoặc ;)')
+      return
+    }
+    await postImportRows(rows)
+  }
+
+  async function onImportFile(ev: React.ChangeEvent<HTMLInputElement>) {
+    const file = ev.target.files?.[0]
+    ev.target.value = ''
+    if (!file) return
+    const lower = file.name.toLowerCase()
+    try {
+      let rows: StudentImportRow[]
+      if (lower.endsWith('.csv')) {
+        const text = await file.text()
+        rows = parseStudentRowsFromCsvText(text)
+      } else if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) {
+        const buf = await file.arrayBuffer()
+        rows = parseStudentRowsFromExcelBuffer(buf)
+      } else {
+        alert('Chọn file .csv, .xlsx hoặc .xls')
+        return
+      }
+      if (rows.length === 0) {
+        alert('Không đọc được dòng dữ liệu nào (cần dòng tiêu đề + ít nhất một dòng học sinh).')
+        return
+      }
+      await postImportRows(rows)
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Không đọc được file')
+    }
   }
 
   return (
@@ -232,8 +258,23 @@ export default function ClassDetailPage() {
       </section>
 
       <section className={d.section}>
-        <h2 className={d.h2}>Nhập CSV</h2>
-        <p className={d.hint}>Dòng đầu: name,password,note - mỗi dòng một học sinh.</p>
+        <h2 className={d.h2}>Nhập từ CSV hoặc Excel</h2>
+        <p className={d.hint}>
+          Dòng đầu tiên: tiêu đề cột (name, password, note hoặc Họ tên, Mật khẩu, Ghi chú). Mỗi dòng sau
+          là một học sinh. Có thể chọn file .xlsx / .xls / .csv hoặc dán CSV vào ô dưới.
+        </p>
+        <label className={d.filePick}>
+          <input
+            type="file"
+            accept=".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            className={d.fileInput}
+            onChange={e => void onImportFile(e)}
+          />
+          <span className={d.filePickBtn}>Chọn file Excel / CSV</span>
+        </label>
+        <p className={d.hint} style={{ marginTop: 10 }}>
+          Hoặc dán nội dung CSV:
+        </p>
         <textarea
           className={d.textarea}
           rows={5}
@@ -241,13 +282,14 @@ export default function ClassDetailPage() {
           onChange={e => setCsvText(e.target.value)}
           placeholder={`name,password,note\n"Nguyễn Văn A",pass123,`}
         />
-        <br />
-        <button type="button" onClick={importCsv} className={d.btnSec}>
-          Nhập từ CSV
-        </button>
-        <a href={`/api/classes/${id}/export`} className={d.link} target="_blank" rel="noreferrer">
-          Xuất CSV (mật khẩu để trống - cần đặt lại khi nhập lại)
-        </a>
+        <div className={d.importActions}>
+          <button type="button" onClick={() => void importCsv()} className={d.btnSec}>
+            Nhập từ ô CSV
+          </button>
+          <a href={`/api/classes/${id}/export`} className={d.link} target="_blank" rel="noreferrer">
+            Xuất CSV (mật khẩu để trống - cần đặt lại khi nhập lại)
+          </a>
+        </div>
       </section>
 
       <section className={d.section}>

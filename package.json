@@ -8,18 +8,19 @@
     "start": "next start"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.9.4",
+    "katex": "^0.16.11",
     "next": "14.2.5",
+    "qrcode": "^1.5.4",
     "react": "^18",
     "react-dom": "^18",
-    "@neondatabase/serverless": "^0.9.4",
-    "qrcode": "^1.5.4",
-    "katex": "^0.16.11"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "typescript": "^5",
-    "@types/qrcode": "^1.5.5"
+    "typescript": "^5"
   }
 }

@@ -1,6 +1,11 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import {
+  canAccessClassesList,
+  canAccessStaffManagementPage,
+  canAccessTeacherExamArea,
+} from '@/lib/staff-nav-access'
 import { useStaffMe } from './useStaffMe'
 import s from './teacher-shell.module.css'
 
@@ -20,9 +25,13 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const classes = pathname.startsWith('/teacher/classes')
   const staff = pathname.startsWith('/teacher/staff')
 
-  const showExamNav = me?.role !== 'school_manager'
-  /** Chỉ tài khoản adminer thấy mục Quản trị (không phải mọi admin). */
-  const showStaffNav = me?.role === 'admin' && me?.username === 'adminer'
+  const navReady = me !== undefined
+  const showExamNav = navReady && me != null && canAccessTeacherExamArea(me)
+  const showClassNav = navReady && me != null && canAccessClassesList(me)
+  const showStaffNav = navReady && me != null && canAccessStaffManagementPage(me)
+
+  const brandHref =
+    navReady && me != null && !canAccessTeacherExamArea(me) ? '/teacher/classes' : '/teacher'
 
   const userLabel =
     me &&
@@ -46,7 +55,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   return (
     <div className={s.shell}>
       <aside className={s.aside}>
-        <Link href={showExamNav ? '/teacher' : '/teacher/classes'} className={s.brand}>
+        <Link href={brandHref} className={s.brand}>
           QuizAI
         </Link>
         {userLabel ? (
@@ -63,48 +72,57 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           </div>
         ) : null}
         <nav className={s.nav}>
-          {showExamNav && (
-            <div className={s.group}>
-              <div className={s.groupLabel}>Đề thi</div>
-              <div className={s.subNav}>
-                <Link href="/teacher" className={dash ? s.active : ''}>
-                  Tổng quan
-                </Link>
-                <Link href="/teacher/create" className={create ? s.active : ''}>
-                  Tạo đề mới
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {showExamNav ? (
-            <div className={s.group}>
-              <div className={s.groupLabel}>Lớp & học sinh</div>
-              <div className={s.subNav}>
-                <Link href="/teacher/classes" className={classes ? s.active : ''}>
-                  Danh sách lớp
-                </Link>
-              </div>
-            </div>
+          {!navReady ? (
+            <p className={s.navLoading} aria-live="polite">
+              Đang tải menu…
+            </p>
           ) : (
-            <div className={s.group}>
-              <div className={s.subNav}>
-                <Link href="/teacher/classes" className={classes ? s.active : ''}>
-                  Danh sách lớp
-                </Link>
-              </div>
-            </div>
-          )}
+            <>
+              {showExamNav && (
+                <div className={s.group}>
+                  <div className={s.groupLabel}>Đề thi</div>
+                  <div className={s.subNav}>
+                    <Link href="/teacher" className={dash ? s.active : ''}>
+                      Tổng quan
+                    </Link>
+                    <Link href="/teacher/create" className={create ? s.active : ''}>
+                      Tạo đề mới
+                    </Link>
+                  </div>
+                </div>
+              )}
 
-          {showStaffNav && (
-            <div className={s.group}>
-              <div className={s.groupLabel}>Quản trị</div>
-              <div className={s.subNav}>
-                <Link href="/teacher/staff" className={staff ? s.active : ''}>
-                  Tài khoản nhân sự
-                </Link>
-              </div>
-            </div>
+              {showClassNav &&
+                (showExamNav ? (
+                  <div className={s.group}>
+                    <div className={s.groupLabel}>Lớp & học sinh</div>
+                    <div className={s.subNav}>
+                      <Link href="/teacher/classes" className={classes ? s.active : ''}>
+                        Danh sách lớp
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={s.group}>
+                    <div className={s.subNav}>
+                      <Link href="/teacher/classes" className={classes ? s.active : ''}>
+                        Danh sách lớp
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+
+              {showStaffNav && (
+                <div className={s.group}>
+                  <div className={s.groupLabel}>Quản trị</div>
+                  <div className={s.subNav}>
+                    <Link href="/teacher/staff" className={staff ? s.active : ''}>
+                      Tài khoản nhân sự
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </nav>
         <div className={s.asideFooter}>
