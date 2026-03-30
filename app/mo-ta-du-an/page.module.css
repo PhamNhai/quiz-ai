@@ -1,0 +1,154 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+.topBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.back {
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.back:hover {
+  text-decoration: underline;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.btnEdit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btnEdit:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btnWord {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btnWord:hover {
+  opacity: 0.92;
+}
+.btnPrint {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.btnPrint:hover {
+  background: var(--surface);
+}
+.hint {
+  font-size: 12px;
+  color: var(--text-3);
+  margin: 0;
+  width: 100%;
+  flex-basis: 100%;
+}
+.title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0 0 0.5rem;
+}
+.subtitle {
+  font-size: 1.05rem;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin: 0 0 2rem;
+}
+.section {
+  margin-bottom: 1.75rem;
+}
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--text);
+}
+.section p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-2);
+  margin: 0 0 0.85rem;
+  text-align: justify;
+}
+.list {
+  margin: 0 0 0.5rem;
+  padding-left: 1.35rem;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+.list li {
+  margin-bottom: 0.45rem;
+}
+.note {
+  margin-top: 2.5rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface2);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-3);
+  line-height: 1.55;
+}
+
+@media print {
+  .topBar {
+    border-bottom: none;
+  }
+  .btnWord,
+  .btnPrint,
+  .btnEdit,
+  .hint,
+  .back {
+    display: none !important;
+  }
+  .page {
+    padding: 0;
+    max-width: none;
+  }
+}

@@ -25,6 +25,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   const create = pathname.startsWith('/teacher/create')
   const classes = pathname.startsWith('/teacher/classes')
   const staff = pathname.startsWith('/teacher/staff')
+  const moTaEdit = pathname.startsWith('/teacher/mo-ta-du-an')
 
   const navReady = me !== undefined
   const showExamNav = navReady && me != null && canAccessTeacherExamArea(me)
@@ -121,9 +122,17 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         </nav>
         <div className={s.asideFooter}>
           {showStaffMgmtLink ? (
-            <Link href="/teacher/staff" className={`${s.staffMgmtLink} ${staff ? s.staffMgmtLinkActive : ''}`}>
-              Tạo tài khoản phụ
-            </Link>
+            <>
+              <Link
+                href="/teacher/mo-ta-du-an/edit"
+                className={`${s.staffMgmtLink} ${moTaEdit ? s.staffMgmtLinkActive : ''}`}
+              >
+                Sửa mô tả dự án
+              </Link>
+              <Link href="/teacher/staff" className={`${s.staffMgmtLink} ${staff ? s.staffMgmtLinkActive : ''}`}>
+                Tạo tài khoản phụ
+              </Link>
+            </>
           ) : null}
           <button type="button" className={s.logoutBtn} onClick={() => void logout()}>
             <svg className={s.logoutIcon} width="18" height="18" viewBox="0 0 24 24" aria-hidden>

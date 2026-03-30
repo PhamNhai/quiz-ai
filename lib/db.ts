@@ -129,6 +129,14 @@ export async function initDB() {
   await sql`ALTER TABLE classes ADD COLUMN IF NOT EXISTS note TEXT DEFAULT ''`
 
   await sql`
+    CREATE TABLE IF NOT EXISTS site_pages (
+      slug       TEXT PRIMARY KEY,
+      payload    JSONB NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
+
+  await sql`
     DO $$
     BEGIN
       IF NOT EXISTS (
